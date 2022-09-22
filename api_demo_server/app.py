@@ -1,45 +1,49 @@
 from fastapi import FastAPI, Form
 import psycopg2
-import psycopg2
 from psycopg2 import sql
-from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT # <-- ADD THIS LINE
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 
+class DataBase:
+    def __init__(self):
+        self.conn = None
 
+    @property
+    def connected(self):
+        return self.conn is not None
 
+    @property
+    def cursor(self):
+        if not self.connected:
+            self.connect_to_postgres()
 
+        return self.conn.cursor()
 
-def connect_to_db():
-    conn = psycopg2.connect(user = "postgres", password = "mysecretpassword", host = "127.0.0.1", port = "5432")
-    print("connected successfully")
-    return conn
+    def db_exists(self, name):
+        self.cursor.execute("select exists(select * from pg_database where datname=%s)", (name,))
+        return bool(self.cursor.fetchone()[0])
 
-def create_db(conn, db_name):
-    conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)  # <-- ADD THIS LINE
+    def connect_to_postgres(self):
+        if not self.connected:
+            self.conn = psycopg2.connect(user="postgres", password="mysecretpassword", host="127.0.0.1", port="5432")
+            self.conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+            print("connected successfully")
 
-    cur = conn.cursor()
+    def create_db(self, db_name):
+        if not self.db_exists(db_name):
+            # Prevent sql injection attack by using sql module instead of string concat
+            self.cursor.execute(sql.SQL("CREATE DATABASE {}").format(
+                sql.Identifier(db_name))
+            )
 
-    # cur.execute("SELECT datname FROM pg_database;")
-
-    # list_database = cur.fetchall()
-
-    # cur.execute("select exists(select * from information_schema.tables where table_name=%s)", (db_name,))
-    cur.execute("select exists(select * from pg_database where datname=%s)", (db_name,))
-    if not cur.fetchone()[0]:
-
-        # Use the psycopg2.sql module instead of string concatenation
-        # in order to avoid sql injection attacs.
-        cur.execute(sql.SQL("CREATE DATABASE {}").format(
+    def drop_db(self, db_name):
+        # Prevent sql injection attack by using sql module instead of string concat
+        self.cursor.execute(sql.SQL("DROP DATABASE IF EXISTS {}").format(
             sql.Identifier(db_name))
         )
-    else:
-        cur.execute(sql.SQL("DROP DATABASE {}").format(
-            sql.Identifier(db_name))
-        )
-        print("Database dropped")
 
 
-
+PSQL_DB = DataBase()
 
 app = FastAPI()
 
@@ -48,8 +52,12 @@ app = FastAPI()
 def root():
     return {"message": "Hello World"}
 
+
+@app.post("/createdb")
+def create_db():
+    PSQL_DB.create_db("names_db")
+
+
 @app.post("/login/")
 def login(username: str = Form()):
-    conn = connect_to_db()
-    create_db(conn, "names_db")
     return {"username": username + "_boy"}
