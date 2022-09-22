@@ -1,3 +1,4 @@
+from starlette_exporter import PrometheusMiddleware, handle_metrics
 from fastapi import FastAPI, Form
 import psycopg2
 from psycopg2 import sql
@@ -55,6 +56,8 @@ class DataBase:
 PSQL_DB = DataBase()
 
 app = FastAPI()
+app.add_middleware(PrometheusMiddleware)
+app.add_route("/metrics", handle_metrics)
 
 
 @app.get("/")

@@ -13,7 +13,8 @@ dependencies = [
     "fastapi",
     "uvicorn[standard]",
     "python-multipart",
-    "psycopg2-binary"
+    "psycopg2-binary",
+    "starlette_exporter"
 ]
 
 # development dependencies
