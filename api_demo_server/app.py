@@ -76,4 +76,4 @@ def drop_db():
 
 @app.post("/login/")
 def login(username: str = Form()):
-    return {"username": username + "_boy"}
+    return {"username": username}
