@@ -23,7 +23,17 @@ def create_db():
 def drop_db():
     PSQL_DB.drop_db("names_db")
 
+@app.post("/createtable")
+def create_table():
+    PSQL_DB.create_table()
 
-@app.post("/login/")
-def login(username: str = Form()):
+
+@app.post("/addname/")
+def name(username: str = Form()):
+    PSQL_DB.add_name(username)
     return {"username": username}
+
+@app.get("/names")
+def get_all_names():
+
+    return {"message": str(PSQL_DB.all_names)}
