@@ -7,6 +7,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 class DataBase:
     def __init__(self):
         self.conn = None
+        self._cursor = None
 
     @property
     def connected(self):
@@ -17,11 +18,17 @@ class DataBase:
         if not self.connected:
             self.connect_to_postgres()
 
-        return self.conn.cursor()
+        if self._cursor is None:
+            self._cursor = self.conn.cursor()
+
+        return self._cursor
 
     def db_exists(self, name):
         self.cursor.execute("select exists(select * from pg_database where datname=%s)", (name,))
-        return bool(self.cursor.fetchone()[0])
+        if self.cursor.fetchone()[0]:
+            print(f"Database {name} already exists.")
+            return True
+        return False
 
     def connect_to_postgres(self):
         if not self.connected:
@@ -41,6 +48,8 @@ class DataBase:
         self.cursor.execute(sql.SQL("DROP DATABASE IF EXISTS {}").format(
             sql.Identifier(db_name))
         )
+        if not self.db_exists(db_name):
+            print(f"Database {db_name} was successfully removed")
 
 
 PSQL_DB = DataBase()
@@ -56,6 +65,10 @@ def root():
 @app.post("/createdb")
 def create_db():
     PSQL_DB.create_db("names_db")
+
+@app.post("/dropdb")
+def drop_db():
+    PSQL_DB.drop_db("names_db")
 
 
 @app.post("/login/")
