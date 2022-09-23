@@ -14,7 +14,7 @@ app.add_route("/metrics", handle_metrics)
 
 @app.get("/")
 def root():
-    return {"message": "Hello World"}
+    return {"message": "Demo API server with prometheus endpoint"}
 
 
 @app.post("/connectdb")
@@ -23,7 +23,7 @@ def connect_to_database():
 
 
 @app.post("/dropdb")
-def drop_db():
+def drop_database():
     PSQL_DB.drop_db("names_db")
 
 
@@ -33,7 +33,7 @@ def create_table():
 
 
 @app.post("/addname/")
-def name(username: str = Form()):
+def add_name(username: str = Form()):
     PSQL_DB.add_name(username)
     return {"username": username}
 
