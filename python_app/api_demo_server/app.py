@@ -1,13 +1,12 @@
 import logging
 import os
 
+from api_demo_server.database import DataBase
 from fastapi import FastAPI
 from fastapi import Form
 from starlette.responses import Response
 from starlette_exporter import PrometheusMiddleware
 from starlette_exporter import handle_metrics
-
-from api_demo_server.database import DataBase
 
 log_file = os.environ.get("DEMO_SERVER_LOGFILE", "demo_server.log")
 
