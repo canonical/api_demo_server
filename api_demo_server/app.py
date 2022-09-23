@@ -1,5 +1,7 @@
-from starlette_exporter import PrometheusMiddleware, handle_metrics
-from fastapi import FastAPI, Form
+from fastapi import FastAPI
+from fastapi import Form
+from starlette_exporter import PrometheusMiddleware
+from starlette_exporter import handle_metrics
 
 from api_demo_server.database import DataBase
 
@@ -19,9 +21,11 @@ def root():
 def connect_to_database():
     PSQL_DB.create_db("names_db")
 
+
 @app.post("/dropdb")
 def drop_db():
     PSQL_DB.drop_db("names_db")
+
 
 @app.post("/createtable")
 def create_table():
@@ -33,8 +37,8 @@ def name(username: str = Form()):
     PSQL_DB.add_name(username)
     return {"username": username}
 
+
 @app.get("/names")
 def get_all_names():
-
 
     return {"names": dict(PSQL_DB.all_names)}
