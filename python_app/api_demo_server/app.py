@@ -8,6 +8,9 @@ from starlette.responses import Response
 from starlette_exporter import PrometheusMiddleware
 from starlette_exporter import handle_metrics
 
+__version__ = "0.0.1"
+
+
 log_file = os.environ.get("DEMO_SERVER_LOGFILE", "demo_server.log")
 
 logger = logging.getLogger("api-demo-server")
@@ -74,3 +77,8 @@ def get_all_names():
 @app.get("/error")
 def cause_error():
     return 1 / 0
+
+
+@app.get("/version")
+def get_version():
+    return {"version": __version__}
