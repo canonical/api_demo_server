@@ -1,5 +1,5 @@
 # Description
-This is a demo server that serves multiple API endpoints.
+This is a demo server based on Python FastAPI.
 Server is used to show connections to PostgreSQL and Prometheus.
 
 To see API reference start the server and open: http://127.0.0.1:8000/docs  
