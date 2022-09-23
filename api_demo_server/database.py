@@ -1,6 +1,11 @@
+import logging
+
 import psycopg2
 from psycopg2 import sql
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+
+# set logger to be configurable from external
+logger = logging.getLogger("api-demo-server")
 
 
 class DataBase:
@@ -18,7 +23,7 @@ class DataBase:
             "select exists(select * from pg_database where datname=%s)", (name,)
         )
         if self.psql_cursor.fetchone()[0]:
-            print(f"Database {name} already exists.")
+            logger.info(f"Database '{name}' already exists.")
             return True
         return False
 
@@ -34,7 +39,7 @@ class DataBase:
         )
         self.db_cursor = self.db_conn.cursor()
 
-        print(f"Successfully connected to database: {db_name}")
+        logger.info(f"Successfully connected to database: {db_name}")
 
     def create_db(self, db_name):
         if not self.db_exists(db_name):
@@ -49,14 +54,14 @@ class DataBase:
         if not self.db_exists(db_name):
             self.db_conn = None
             self.db_cursor = None
-            print(f"Database {db_name} was successfully removed")
+            logger.info(f"Database '{db_name}' was successfully removed")
 
     def table_exists(self, table_name):
         self.db_cursor.execute(
             "SELECT EXISTS (SELECT relname FROM pg_class WHERE relname=%s);", (table_name,)
         )
         if self.db_cursor.fetchone()[0]:
-            print(f"Table {table_name} already exists.")
+            logger.info(f"Table '{table_name}' already exists.")
             return True
         return False
 
