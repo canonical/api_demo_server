@@ -1,4 +1,5 @@
 import logging
+import os
 
 import psycopg2
 from psycopg2 import sql
@@ -7,13 +8,16 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 # set logger to be configurable from external
 logger = logging.getLogger("api-demo-server")
 
+DB_HOST = os.environ.get("DEMO_SERVER_DB_HOST", "127.0.0.1")
+DB_PORT = os.environ.get("DEMO_SERVER_DB_PORT", "5432")
+
 
 class DataBase:
     def __init__(self):
         self.db_conn = None
         self.db_cursor = None
         self.psql_conn = psycopg2.connect(
-            user="postgres", password="mysecretpassword", host="127.0.0.1", port="5432"
+            user="postgres", password="mysecretpassword", host=DB_HOST, port=DB_PORT
         )
         self.psql_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         self.psql_cursor = self.psql_conn.cursor()
@@ -34,8 +38,8 @@ class DataBase:
             dbname=db_name,
             user="postgres",
             password="mysecretpassword",
-            host="127.0.0.1",
-            port="5432",
+            host=DB_HOST,
+            port=DB_PORT,
         )
         self.db_cursor = self.db_conn.cursor()
 
