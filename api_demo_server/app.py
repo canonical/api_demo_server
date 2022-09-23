@@ -15,8 +15,8 @@ def root():
     return {"message": "Hello World"}
 
 
-@app.post("/createdb")
-def create_db():
+@app.post("/connectdb")
+def connect_to_database():
     PSQL_DB.create_db("names_db")
 
 @app.post("/dropdb")
@@ -36,4 +36,5 @@ def name(username: str = Form()):
 @app.get("/names")
 def get_all_names():
 
-    return {"message": str(PSQL_DB.all_names)}
+
+    return {"names": dict(PSQL_DB.all_names)}
