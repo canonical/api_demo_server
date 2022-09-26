@@ -27,4 +27,4 @@ resources:
   demo-server-image:
     type: oci-image
     description: OCI image from GitHub Container Repository
-    upstream-source: ghcr.io/beliaev-maksim/api_demo_server:0.0.2
+    upstream-source: ghcr.io/beliaev-maksim/api_demo_server:0.0.3

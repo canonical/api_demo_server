@@ -5,5 +5,5 @@ RUN apt-get update && apt-get install -y \
 COPY ./pyproject.toml .
 COPY ./api_demo_server ./api_demo_server
 RUN python3 -m pip install .
-
-ENTRYPOINT ["uvicorn", "api_demo_server.app:app", "--reload", "--host=0.0.0.0"]
+EXPOSE 8000
+ENTRYPOINT ["uvicorn", "api_demo_server.app:app", "--host=0.0.0.0"]

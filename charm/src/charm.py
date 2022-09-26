@@ -79,7 +79,7 @@ class FastAPIDemoCharm(CharmBase):
                 "fastapi": {
                     "override": "replace",
                     "summary": "fastapi demo",
-                    "command": "uvicorn api_demo_server.app:app --reload --host=0.0.0.0",
+                    "command": "uvicorn api_demo_server.app:app --host=0.0.0.0",
                     "startup": "enabled",
                     "environment": self.app_environment,
                 }
