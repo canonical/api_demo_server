@@ -41,6 +41,7 @@ class FastAPIDemoCharm(CharmBase):
         )
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.drop_db_action, self._on_drop_db_action)
+        self.framework.observe(self.on.fetch_db_action, self._on_fetch_db_action)
 
         # Charm events defined in the database requires charm library.
         self.database = DatabaseRequires(self, relation_name="database", database_name="names_db")
@@ -134,6 +135,17 @@ class FastAPIDemoCharm(CharmBase):
                 event.fail(f"Request status code is: {resp.status_code}")
         except Exception as e:
             event.fail(f"Request failed: {e}")
+
+    def _on_fetch_db_action(self, event):
+        """Example of a custom action that could be defined.
+
+        In this case the action will call an API to remove (clean-up) a database.
+        Update status of the action to fail if something goes wrong, otherwise pass a
+        success message to the user.
+
+        Learn more about actions at https://juju.is/docs/sdk/actions
+        """
+        event.set_results({"db-rel-data": str(self.database.fetch_relation_data())})
 
     @property
     def version(self) -> str:
