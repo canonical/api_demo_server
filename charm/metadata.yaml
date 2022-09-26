@@ -3,7 +3,7 @@
 
 # For a complete list of supported options, see:
 # https://juju.is/docs/sdk/metadata-reference
-name: charm
+name: demo-api-charm
 display-name: |
   demo-fastapi-k8s
 description: |
@@ -13,7 +13,7 @@ summary: |
   FastAPI Demo charm for Kubernetes
 
 requires:
-  db:
+  database:
     interface: pgsql
     limit: 1
 

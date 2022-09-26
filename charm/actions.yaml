@@ -7,10 +7,10 @@
 #
 # Learn more about actions at: https://juju.is/docs/sdk/actions
 
-fortune:
-  description: Returns a pithy phrase.
+drop-db:
+  description: Drops apps database using app's API
   params:
-    fail:
-      description: "Fail with this message"
-      type: string
-      default: ""
+    timeout:
+      description: "API Request timeout (this is just an example"
+      type: integer
+      default: 10

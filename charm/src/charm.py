@@ -34,11 +34,10 @@ class FastAPIDemoCharm(CharmBase):
         super().__init__(*args)
 
         self.app_environment = {"DEMO_SERVER_DB_HOST": self.model.config["postgresip"]}
-        self._name = "demo-api-charm"
-        self.container = self.unit.get_container(self._name)
+        self.container = self.unit.get_container("demo-server")
 
         self.framework.observe(
-            self.on.demo_server_image_pebble_ready, self._on_demo_server_image_pebble_ready
+            self.on.demo_server_pebble_ready, self._on_demo_server_image_pebble_ready
         )
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.drop_db_action, self._on_drop_db_action)
@@ -112,7 +111,7 @@ class FastAPIDemoCharm(CharmBase):
 
         Learn more about config at https://juju.is/docs/sdk/config
         """
-        current = self.config["thing"]
+        current = self.config["postgresip"]  # see config.yaml
         if current not in self._stored.things:
             logger.debug("found a new thing: %r", current)
             self._stored.things.append(current)
@@ -126,8 +125,9 @@ class FastAPIDemoCharm(CharmBase):
 
         Learn more about actions at https://juju.is/docs/sdk/actions
         """
+        timeout = event.params["timeout"]  # see actions.yaml
         try:
-            resp = requests.post("http://localhost:8000/dropdb", timeout=10)
+            resp = requests.post("http://localhost:8000/dropdb", timeout=int(timeout))
             if resp.status_code == 200:
                 event.set_results({"success": "Database was dropped successfully."})
             else:
@@ -138,7 +138,7 @@ class FastAPIDemoCharm(CharmBase):
     @property
     def version(self) -> str:
         """Reports the current workload (FastAPI app) version."""
-        container = self.unit.get_container("demo-server-image")
+        container = self.unit.get_container("demo-server")
         if container.can_connect() and container.get_services("fastapi"):
             try:
                 return self._request_version()
