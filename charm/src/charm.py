@@ -145,7 +145,25 @@ class FastAPIDemoCharm(CharmBase):
 
         Learn more about actions at https://juju.is/docs/sdk/actions
         """
-        event.set_results({"db-rel-data": str(self.database.fetch_relation_data())})
+        data = self.database.fetch_relation_data()
+        for key, val in data.items():
+            if val["database"] == "names_db":
+                event.set_results(
+                    {
+                        "db-username": val["user"],
+                        "db-password": val["password"],
+                        "db-host": val["host"],
+                        "db-port": val["port"],
+                    }
+                )
+                self.app_environment = {
+                    "DEMO_SERVER_DB_HOST": val["host"],
+                    "DEMO_SERVER_DB_PORT": val["port"],
+                    "DEMO_SERVER_DB_USER": val["user"],
+                    "DEMO_SERVER_DB_PASSWORD": val["password"],
+                }
+                self._on_demo_server_image_pebble_ready(None)
+                break
 
     @property
     def version(self) -> str:
