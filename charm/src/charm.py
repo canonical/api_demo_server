@@ -14,6 +14,8 @@ develop a new k8s charm using the Operator Framework:
 import logging
 
 import requests
+from charms.data_platform_libs.v0.database_requires import DatabaseCreatedEvent
+from charms.data_platform_libs.v0.database_requires import DatabaseRequires
 from ops.charm import CharmBase
 from ops.framework import StoredState
 from ops.main import main
@@ -30,14 +32,25 @@ class FastAPIDemoCharm(CharmBase):
 
     def __init__(self, *args):
         super().__init__(*args)
+
+        self.app_environment = {"DEMO_SERVER_DB_HOST": self.model.config["postgresip"]}
+        self._name = "demo-api-charm"
+        self.container = self.unit.get_container(self._name)
+
         self.framework.observe(
             self.on.demo_server_image_pebble_ready, self._on_demo_server_image_pebble_ready
         )
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.drop_db_action, self._on_drop_db_action)
+
+        # Charm events defined in the database requires charm library.
+        self.database = DatabaseRequires(self, relation_name="database", database_name="names_db")
+        self.framework.observe(self.database.on.database_created, self._on_database_created)
+        self.framework.observe(self.database.on.endpoints_changed, self._on_database_created)
+
         self._stored.set_default(things=[])
 
-    def _on_demo_server_image_pebble_ready(self, event):
+    def _on_demo_server_image_pebble_ready(self, _):
         """Define and start a workload using the Pebble API.
 
         You'll need to specify the right entrypoint and environment
@@ -46,12 +59,10 @@ class FastAPIDemoCharm(CharmBase):
 
         Learn more about Pebble layers at https://github.com/canonical/pebble
         """
-        # Get a reference the container attribute on the PebbleReadyEvent
-        container = event.workload
         # Add initial Pebble config layer using the Pebble API
-        container.add_layer("fastapi_demo", self._pebble_layer, combine=True)
+        self.container.add_layer("fastapi_demo", self._pebble_layer, combine=True)
         # Autostart any services that were defined with startup: enabled
-        container.autostart()
+        self.container.autostart()
 
         # add workload version in juju status
         self.unit.set_workload_version(self.version)
@@ -71,11 +82,25 @@ class FastAPIDemoCharm(CharmBase):
                     "summary": "fastapi demo",
                     "command": "uvicorn api_demo_server.app:app --reload --host=0.0.0.0",
                     "startup": "enabled",
-                    "environment": {"DEMO_SERVER_DB_HOST": self.model.config["postgresip"]},
+                    "environment": self.app_environment,
                 }
             },
         }
         return Layer(pebble_layer)
+
+    def _on_database_created(self, event: DatabaseCreatedEvent) -> None:
+        logger.info("New endpoint is %s", event.endpoints)
+        # Handle the created database
+        self.app_environment = {
+            "DEMO_SERVER_DB_HOST": event.endpoints,
+            "DEMO_SERVER_DB_USER": event.username,
+            "DEMO_SERVER_DB_PASSWORD": event.password,
+        }
+
+        self._on_demo_server_image_pebble_ready(None)
+
+        # Set active status
+        self.unit.status = ActiveStatus("received database credentials")
 
     def _on_config_changed(self, _):
         """Just an example to show how to deal with changed configuration.
