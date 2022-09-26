@@ -1,12 +1,13 @@
 import logging
 import os
 
-from api_demo_server.database import DataBase
 from fastapi import FastAPI
 from fastapi import Form
 from starlette.responses import Response
 from starlette_exporter import PrometheusMiddleware
 from starlette_exporter import handle_metrics
+
+from .database import DataBase
 
 __version__ = "0.0.2"
 
