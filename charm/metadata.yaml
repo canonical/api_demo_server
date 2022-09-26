@@ -12,6 +12,11 @@ description: |
 summary: |
   FastAPI Demo charm for Kubernetes
 
+requires:
+  db:
+    interface: pgsql
+    limit: 1
+
 # containers for the workload (delete for non-k8s)
 containers:
   demo-server:
