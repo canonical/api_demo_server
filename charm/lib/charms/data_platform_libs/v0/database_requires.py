@@ -22,8 +22,8 @@ Following an example of using the DatabaseCreatedEvent, in the context of the
 application charm code:
 
 ```python
-from charms.data_platform_libs.v0.database_requires import DatabaseRequires
 
+from charms.data_platform_libs.v0.database_requires import DatabaseRequires
 
 class ApplicationCharm(CharmBase):
     # Application charm that connects to database charms.
@@ -32,12 +32,8 @@ class ApplicationCharm(CharmBase):
         super().__init__(*args)
 
         # Charm events defined in the database requires charm library.
-        self.database = DatabaseRequires(
-            self, relation_name="database", database_name="database"
-        )
-        self.framework.observe(
-            self.database.on.database_created, self._on_database_created
-        )
+        self.database = DatabaseRequires(self, relation_name="database", database_name="database")
+        self.framework.observe(self.database.on.database_created, self._on_database_created)
 
     def _on_database_created(self, event: DatabaseCreatedEvent) -> None:
         # Handle the created database
@@ -72,6 +68,7 @@ To differentiate multiple clusters connected to the same relation endpoint
 the application charm can use the name of the remote application:
 
 ```python
+
 def _on_database_created(self, event: DatabaseCreatedEvent) -> None:
     # Get the remote app name of the cluster that triggered this event
     cluster = event.relation.app.name
@@ -86,8 +83,8 @@ The second way is to use different event handlers to handle each cluster events.
 The implementation would be something like the following code:
 
 ```python
-from charms.data_platform_libs.v0.database_requires import DatabaseRequires
 
+from charms.data_platform_libs.v0.database_requires import DatabaseRequires
 
 class ApplicationCharm(CharmBase):
     # Application charm that connects to database charms.
@@ -100,15 +97,13 @@ class ApplicationCharm(CharmBase):
             self,
             relation_name="database",
             database_name="database",
-            relations_aliases=["cluster1", "cluster2"],
+            relations_aliases = ["cluster1", "cluster2"],
         )
         self.framework.observe(
-            self.database.on.cluster1_database_created,
-            self._on_cluster1_database_created,
+            self.database.on.cluster1_database_created, self._on_cluster1_database_created
         )
         self.framework.observe(
-            self.database.on.cluster2_database_created,
-            self._on_cluster2_database_created,
+            self.database.on.cluster2_database_created, self._on_cluster2_database_created
         )
 
     def _on_cluster1_database_created(self, event: DatabaseCreatedEvent) -> None:
@@ -132,6 +127,7 @@ class ApplicationCharm(CharmBase):
             event.endpoints,
         )
         ...
+
 ```
 """
 
@@ -139,15 +135,15 @@ import json
 import logging
 from collections import namedtuple
 from datetime import datetime
-from typing import List
-from typing import Optional
+from typing import List, Optional
 
-from ops.charm import CharmEvents
-from ops.charm import RelationChangedEvent
-from ops.charm import RelationEvent
-from ops.charm import RelationJoinedEvent
-from ops.framework import EventSource
-from ops.framework import Object
+from ops.charm import (
+    CharmEvents,
+    RelationChangedEvent,
+    RelationEvent,
+    RelationJoinedEvent,
+)
+from ops.framework import EventSource, Object
 from ops.model import Relation
 
 # The unique Charmhub library identifier, never change it
@@ -487,7 +483,9 @@ class DatabaseRequires(Object):
         if "read-only-endpoints" in diff.added or "read-only-endpoints" in diff.changed:
             # Emit the default event (the one without an alias).
             logger.info("read-only-endpoints changed on %s", datetime.now())
-            self.on.read_only_endpoints_changed.emit(event.relation, app=event.app, unit=event.unit)
+            self.on.read_only_endpoints_changed.emit(
+                event.relation, app=event.app, unit=event.unit
+            )
 
             # Emit the aliased event (if any).
             self._emit_aliased_event(event, "read_only_endpoints_changed")
