@@ -1,3 +1,3 @@
 """Demo FastAPI server"""
 
-from .app import __version__  # noqa
+__version__ = "0.0.2"
