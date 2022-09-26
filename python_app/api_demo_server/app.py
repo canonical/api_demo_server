@@ -8,7 +8,7 @@ from starlette.responses import Response
 from starlette_exporter import PrometheusMiddleware
 from starlette_exporter import handle_metrics
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 
 log_file = os.environ.get("DEMO_SERVER_LOGFILE", "demo_server.log")
