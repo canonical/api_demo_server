@@ -48,7 +48,7 @@ def root():
 
 @app.post("/connectdb")
 def connect_to_database():
-    PSQL_DB.create_db("names_db")
+    PSQL_DB.connect_to_psql()
 
 
 @app.post("/dropdb")
