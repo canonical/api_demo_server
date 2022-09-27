@@ -1,2 +1,4 @@
 ops >= 1.4.0
 requests<3
+lightkube
+lightkube-models

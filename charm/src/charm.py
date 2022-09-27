@@ -16,6 +16,8 @@ import logging
 import requests
 from charms.data_platform_libs.v0.database_requires import DatabaseCreatedEvent
 from charms.data_platform_libs.v0.database_requires import DatabaseRequires
+from charms.observability_libs.v1.kubernetes_service_patch import KubernetesServicePatch
+from lightkube.models.core_v1 import ServicePort
 from ops.charm import CharmBase
 from ops.framework import StoredState
 from ops.main import main
@@ -36,6 +38,10 @@ class FastAPIDemoCharm(CharmBase):
 
         self.app_environment = {"DEMO_SERVER_DB_HOST": self.model.config["postgresip"]}
         self.container = self.unit.get_container("demo-server")
+
+        # Patch the juju created Kubernetes service to contain the right ports
+        port = ServicePort(8000, name=f"{self.app.name}")
+        self.service_patcher = KubernetesServicePatch(self, [port])
 
         self.framework.observe(
             self.on.demo_server_pebble_ready, self._on_demo_server_image_pebble_ready
