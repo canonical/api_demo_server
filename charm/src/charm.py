@@ -20,6 +20,7 @@ from ops.charm import CharmBase
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import ActiveStatus
+from ops.model import WaitingStatus
 from ops.pebble import Layer
 
 logger = logging.getLogger(__name__)
@@ -137,6 +138,24 @@ class FastAPIDemoCharm(CharmBase):
         except Exception as e:
             event.fail(f"Request failed: {e}")
 
+    def _update_layer_and_restart(self):
+        if self.container.can_connect():
+            layer = self._pebble_layer.to_dict()
+            # Get the current config
+            services = self.container.get_plan().to_dict().get("services", {})
+            # Check if there are any changes to services
+            if services != layer["services"]:
+                # Changes were made, add the new layer
+                self.container.add_layer("fastapi_demo", self._pebble_layer, combine=True)
+                logging.info("Added updated layer 'fastapi_demo' to Pebble plan")
+                # Restart it and report a new status to Juju
+                self.container.restart("fastapi")
+                logging.info("Restarted 'fastapi' service")
+            # All is well, set an ActiveStatus
+            self.unit.status = ActiveStatus()
+        else:
+            self.unit.status = WaitingStatus("waiting for Pebble in workload container")
+
     def _on_fetch_db_action(self, event):
         """Example of a custom action that could be defined.
 
@@ -163,7 +182,7 @@ class FastAPIDemoCharm(CharmBase):
                     "DEMO_SERVER_DB_USER": val["user"],
                     "DEMO_SERVER_DB_PASSWORD": val["password"],
                 }
-                self._on_demo_server_image_pebble_ready(None)
+                self._update_layer_and_restart()
                 break
 
     @property
