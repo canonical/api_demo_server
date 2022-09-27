@@ -17,8 +17,12 @@ DB_PASSWORD = os.environ.get("DEMO_SERVER_DB_PASSWORD", "mysecretpassword")
 
 class DataBase:
     def __init__(self):
+        self.psql_conn = None
+        self.psql_cursor = None
         self.db_conn = None
         self.db_cursor = None
+
+    def connect_to_psql(self):
         self.psql_conn = psycopg2.connect(
             user=DB_USER, password=DB_PASSWORD, host=DB_HOST, port=DB_PORT
         )
@@ -26,6 +30,9 @@ class DataBase:
         self.psql_cursor = self.psql_conn.cursor()
 
     def db_exists(self, name):
+        if self.psql_conn is None:
+            self.connect_to_psql()
+
         self.psql_cursor.execute(
             "select exists(select * from pg_database where datname=%s)", (name,)
         )
@@ -54,10 +61,11 @@ class DataBase:
             self.psql_cursor.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(db_name)))
 
     def drop_db(self, db_name):
-        # Prevent sql injection attack by using sql module instead of string concat
-        self.psql_cursor.execute(
-            sql.SQL("DROP DATABASE IF EXISTS {}").format(sql.Identifier(db_name))
-        )
+        if self.db_exists(db_name):
+            # Prevent sql injection attack by using sql module instead of string concat
+            self.psql_cursor.execute(
+                sql.SQL("DROP DATABASE IF EXISTS {}").format(sql.Identifier(db_name))
+            )
         if not self.db_exists(db_name):
             self.db_conn = None
             self.db_cursor = None

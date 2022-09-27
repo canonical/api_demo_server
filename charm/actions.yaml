@@ -14,3 +14,6 @@ drop-db:
       description: "API Request timeout (this is just an example"
       type: integer
       default: 10
+
+fetch-db:
+  description: Fetches Database relation information

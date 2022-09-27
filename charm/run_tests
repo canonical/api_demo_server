@@ -15,3 +15,4 @@ fi
 flake8
 coverage run --branch --source=src -m unittest -v "$@"
 coverage report -m
+

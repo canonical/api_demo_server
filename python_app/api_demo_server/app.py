@@ -18,6 +18,10 @@ formatter = logging.Formatter(
     fmt="%(asctime)s (%(levelname)s) %(message)s", datefmt="%d.%m.%Y %H:%M:%S"
 )
 
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
+
 file_handler = logging.FileHandler(filename=log_file)
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
@@ -48,7 +52,7 @@ def root():
 
 @app.post("/connectdb")
 def connect_to_database():
-    PSQL_DB.create_db("names_db")
+    PSQL_DB.connect_to_psql()
 
 
 @app.post("/dropdb")

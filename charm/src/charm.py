@@ -20,6 +20,7 @@ from ops.charm import CharmBase
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import ActiveStatus
+from ops.model import WaitingStatus
 from ops.pebble import Layer
 
 logger = logging.getLogger(__name__)
@@ -41,6 +42,7 @@ class FastAPIDemoCharm(CharmBase):
         )
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.drop_db_action, self._on_drop_db_action)
+        self.framework.observe(self.on.fetch_db_action, self._on_fetch_db_action)
 
         # Charm events defined in the database requires charm library.
         self.database = DatabaseRequires(self, relation_name="database", database_name="names_db")
@@ -62,6 +64,7 @@ class FastAPIDemoCharm(CharmBase):
         self.container.add_layer("fastapi_demo", self._pebble_layer, combine=True)
         # Autostart any services that were defined with startup: enabled
         self.container.autostart()
+        self.container.replan()
 
         # add workload version in juju status
         self.unit.set_workload_version(self.version)
@@ -134,6 +137,53 @@ class FastAPIDemoCharm(CharmBase):
                 event.fail(f"Request status code is: {resp.status_code}")
         except Exception as e:
             event.fail(f"Request failed: {e}")
+
+    def _update_layer_and_restart(self):
+        if self.container.can_connect():
+            layer = self._pebble_layer.to_dict()
+            # Get the current config
+            services = self.container.get_plan().to_dict().get("services", {})
+            # Check if there are any changes to services
+            if services != layer["services"]:
+                # Changes were made, add the new layer
+                self.container.add_layer("fastapi_demo", self._pebble_layer, combine=True)
+                logging.info("Added updated layer 'fastapi_demo' to Pebble plan")
+                # Restart it and report a new status to Juju
+                self.container.restart("fastapi")
+                logging.info("Restarted 'fastapi' service")
+            # All is well, set an ActiveStatus
+            self.unit.status = ActiveStatus()
+        else:
+            self.unit.status = WaitingStatus("waiting for Pebble in workload container")
+
+    def _on_fetch_db_action(self, event):
+        """Example of a custom action that could be defined.
+
+        In this case the action will call an API to remove (clean-up) a database.
+        Update status of the action to fail if something goes wrong, otherwise pass a
+        success message to the user.
+
+        Learn more about actions at https://juju.is/docs/sdk/actions
+        """
+        data = self.database.fetch_relation_data()
+        for key, val in data.items():
+            if val["database"] == "names_db":
+                event.set_results(
+                    {
+                        "db-username": val["user"],
+                        "db-password": val["password"],
+                        "db-host": val["host"],
+                        "db-port": val["port"],
+                    }
+                )
+                self.app_environment = {
+                    "DEMO_SERVER_DB_HOST": val["host"],
+                    "DEMO_SERVER_DB_PORT": val["port"],
+                    "DEMO_SERVER_DB_USER": val["user"],
+                    "DEMO_SERVER_DB_PASSWORD": val["password"],
+                }
+                self._update_layer_and_restart()
+                break
 
     @property
     def version(self) -> str:
