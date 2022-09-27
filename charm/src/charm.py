@@ -63,6 +63,7 @@ class FastAPIDemoCharm(CharmBase):
         self.container.add_layer("fastapi_demo", self._pebble_layer, combine=True)
         # Autostart any services that were defined with startup: enabled
         self.container.autostart()
+        self.container.replan()
 
         # add workload version in juju status
         self.unit.set_workload_version(self.version)
