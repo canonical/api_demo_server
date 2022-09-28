@@ -16,7 +16,10 @@ import logging
 import requests
 from charms.data_platform_libs.v0.database_requires import DatabaseCreatedEvent
 from charms.data_platform_libs.v0.database_requires import DatabaseRequires
+from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
+from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
 from charms.observability_libs.v1.kubernetes_service_patch import KubernetesServicePatch
+from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from lightkube.models.core_v1 import ServicePort
 from ops.charm import CharmBase
 from ops.framework import StoredState
@@ -42,6 +45,21 @@ class FastAPIDemoCharm(CharmBase):
         # Patch the juju created Kubernetes service to contain the right ports
         port = ServicePort(8000, name=f"{self.app.name}")
         self.service_patcher = KubernetesServicePatch(self, [port])
+
+        # Provide ability for prometheus to be scraped by Prometheus using prometheus_scrape
+        self._prometheus_scraping = MetricsEndpointProvider(
+            self,
+            relation_name="metrics-endpoint",
+            jobs=[{"static_configs": [{"targets": ["*:8000"]}]}],
+        )
+
+        # Enable log forwarding for Loki and other charms that implement loki_push_api
+        self._logging = LogProxyConsumer(
+            self, relation_name="logging", log_files=["demo_server.log"]
+        )
+
+        # Provide grafana dashboards over a relation interface
+        self._grafana_dashboards = GrafanaDashboardProvider(self, relation_name="grafana-dashboard")
 
         self.framework.observe(
             self.on.demo_server_pebble_ready, self._on_demo_server_image_pebble_ready
