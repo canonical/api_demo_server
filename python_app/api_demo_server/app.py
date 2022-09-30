@@ -68,18 +68,18 @@ def drop_database():
 
 @app.post("/createtable")
 def create_table():
-    PSQL_DB.create_table()
+    PSQL_DB.create_table(db_name="names_db", table_name="names")
 
 
 @app.post("/addname/")
 def add_name(username: str = Form()):
-    PSQL_DB.add_name(username)
+    PSQL_DB.add_name(username, db_name="names_db", table_name="names")
     return {"username": username}
 
 
 @app.get("/names")
 def get_all_names():
-    return {"names": dict(PSQL_DB.all_names)}
+    return {"names": dict(PSQL_DB.all_names(db_name="names_db", table_name="names"))}
 
 
 @app.get("/error")
