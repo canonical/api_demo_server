@@ -61,14 +61,14 @@ def root():
     return RedirectResponse(url="/docs")
 
 
-@app.post("/dropdb")
-def drop_database():
-    PSQL_DB.drop_db("names_db")
-
-
 @app.post("/createtable")
 def create_table():
     PSQL_DB.create_table(db_name="names_db", table_name="names")
+
+
+@app.post("/deletetable")
+def delete_table():
+    PSQL_DB.delete_table(db_name="names_db", table_name="names")
 
 
 @app.post("/addname/")
@@ -84,6 +84,7 @@ def get_all_names():
 
 @app.get("/error")
 def cause_error():
+    """Intentionally cause a ZeroDivisionError to test logging and prometheus metrics."""
     return 1 / 0
 
 

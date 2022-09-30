@@ -19,76 +19,43 @@ DB_PASSWORD = os.environ.get("DEMO_SERVER_DB_PASSWORD", "mysecretpassword")
 
 class DataBase:
     def __init__(self) -> None:
-        self.psql_conn = None
-        self.psql_cursor = None
         self.db_conn = None
         self.db_cursor = None
 
-    def connect_to_psql(self) -> None:
-        """Connects to PSQL without specification of DB"""
-        self.psql_conn = psycopg2.connect(
-            user=DB_USER, password=DB_PASSWORD, host=DB_HOST, port=DB_PORT
-        )
-        self.psql_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-        self.psql_cursor = self.psql_conn.cursor()
-
-    def db_exists(self, db_name: str) -> bool:
-        """Checks if DB already defined in PSQL."""
-        if self.psql_conn is None:
-            self.connect_to_psql()
-
-        self.psql_cursor.execute(
-            "select exists(select * from pg_database where datname=%s)", (db_name,)
-        )
-        if self.psql_cursor.fetchone()[0]:
-            logger.info(f"Database '{db_name}' already exists.")
-            return True
-        return False
-
     def connect_to_db(self, db_name: str) -> None:
         """Connects to the database, creates if it does not exist."""
-        self.create_db(db_name)
-
-        self.db_conn = psycopg2.connect(
-            dbname=db_name,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            host=DB_HOST,
-            port=DB_PORT,
-        )
+        try:
+            self.db_conn = psycopg2.connect(
+                dbname=db_name,
+                user=DB_USER,
+                password=DB_PASSWORD,
+                host=DB_HOST,
+                port=DB_PORT,
+            )
+            self.db_conn.autocommit = True
+        except psycopg2.OperationalError as exc:
+            if f'database "{db_name}" does not exist' in str(exc):
+                logger.error(f"Database {db_name} does not exist. Trying to create.")
+                self.create_db(db_name)
+                self.connect_to_db(db_name)
+            else:
+                raise
         self.db_cursor = self.db_conn.cursor()
 
         logger.info(f"Successfully connected to database: {db_name}")
 
-    def close_all_db_connections(self, db_name: str) -> None:
-        """Close all the connections to the database.
+    @staticmethod
+    def create_db(db_name: str) -> None:
+        """Creates database if it does not exist.
 
-        This might be required to perform some operations on DB, like drop"""
-        self.psql_cursor.execute(
-            """
-            SELECT pg_terminate_backend(pg_stat_activity.pid)
-            FROM pg_stat_activity
-            WHERE pg_stat_activity.datname = %s;""",
-            (db_name,),
-        )
-        logger.info(f"All connections to DB '{db_name}' were closed.")
-
-    def create_db(self, db_name: str) -> None:
-        """Creates database if it does not exist."""
-        if not self.db_exists(db_name):
-            # Prevent sql injection attack by using sql module instead of string concat
-            self.psql_cursor.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(db_name)))
-            logger.info(f"Database '{db_name}' was created.")
-
-    def drop_db(self, db_name: str) -> None:
-        """Drops (deletes) database if exists"""
-        if self.db_exists(db_name):
-            self.close_all_db_connections(db_name)
-            self.psql_cursor.execute(sql.SQL("DROP DATABASE {}").format(sql.Identifier(db_name)))
-        if not self.db_exists(db_name):
-            self.db_conn = None
-            self.db_cursor = None
-            logger.info(f"Database '{db_name}' was successfully removed")
+        Will work only for "postgres" user.
+        """
+        conn = psycopg2.connect(user=DB_USER, password=DB_PASSWORD, host=DB_HOST, port=DB_PORT)
+        conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = conn.cursor()
+        # Prevent sql injection attack by using sql module instead of string concat
+        cursor.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(db_name)))
+        logger.info(f"Database '{db_name}' was created.")
 
     def _table_exists(self, table_name: str) -> bool:
         """Checks if the table already exists."""
@@ -101,8 +68,18 @@ class DataBase:
             return True
         return False
 
+    def delete_table(self, db_name: str, table_name: str) -> None:
+        """Delete a table in database `db_name`"""
+        if self.db_cursor is None:
+            self.connect_to_db(db_name)
+
+        self.db_cursor.execute(
+            sql.SQL("DROP TABLE IF EXISTS {};").format(sql.Identifier(table_name))
+        )
+        logger.info(f"Table '{table_name}' is deleted")
+
     def create_table(self, db_name: str, table_name: str) -> None:
-        """Create a table in database `db_name` if doesn't already exist."""
+        """Create a table in database `db_name` if it doesn't already exist."""
         if self.db_cursor is None:
             self.connect_to_db(db_name)
         if self._table_exists(table_name):
@@ -116,14 +93,12 @@ class DataBase:
         logger.info(f"Table '{table_name}' was created in DB '{db_name}'")
 
     def add_name(self, name: str, db_name: str, table_name: str) -> None:
-
         self.create_table(db_name, table_name)
 
         self.db_cursor.execute(
             sql.SQL("INSERT INTO {} (data) VALUES (%s);").format(sql.Identifier(table_name)),
             (name,),
         )
-        self.db_conn.commit()
 
     def all_names(self, db_name: str, table_name: str) -> List[Tuple[int, str]]:
         self.create_table(db_name, table_name)

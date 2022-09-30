@@ -4,10 +4,11 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "api_demo_server"
+description = """FastAPI demo server"""
 authors = [{name = "Maksim Beliaev", email = "beliaev.m.s@gmail.com"}]
 license = {file = "LICENSE"}
 classifiers = ["License :: OSI Approved :: MIT License"]
-dynamic = ["version", "description"]
+dynamic = ["version"]
 
 dependencies = [
     "fastapi==0.85",
