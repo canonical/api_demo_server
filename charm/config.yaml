@@ -8,7 +8,27 @@
 # Learn more about config at: https://juju.is/docs/sdk/config
 
 options:
-  postgresip:
+  use-standalone-db:
+    default: False
+    description: Set to True if would like to use an external DB, not as related charm
+    type: boolean
+
+  postgres-ip:
     default: 127.0.0.1
-    description: IP address of PostgreSQL database. (omit if use with postgres charm)
+    description: IP address of PostgreSQL database. (only if use-standalone-db is True)
+    type: string
+
+  postgres-port:
+    default: 5432
+    description: port of PostgreSQL database. (only if use-standalone-db is True)
+    type: int
+
+  postgres-username:
+    default: demo-api-charm
+    description: username of PostgreSQL database. (only if use-standalone-db is True)
+    type: string
+
+  postgres-password:
+    default: mysecretpassword
+    description: password of PostgreSQL database. (only if use-standalone-db is True)
     type: string
