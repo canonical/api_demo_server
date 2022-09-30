@@ -10,20 +10,17 @@ classifiers = ["License :: OSI Approved :: MIT License"]
 dynamic = ["version", "description"]
 
 dependencies = [
-    "fastapi",
-    "uvicorn[standard]",
-    "python-multipart",
-    "psycopg2-binary",
-    "starlette_exporter"
+    "fastapi==0.85",
+    "uvicorn[standard]==0.18.3",
+    "python-multipart==0.0.5",
+    "psycopg2-binary==2.9.3",
+    "starlette_exporter==0.14.0"
 ]
 
 # development dependencies
 [project.optional-dependencies]
 test = [
     "pre-commit",
-    "mypy",
-    "pytest",
-    "pytest-cov",
 ]
 
 deploy = [
