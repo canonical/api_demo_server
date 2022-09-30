@@ -46,7 +46,7 @@ class DataBase:
         return False
 
     def connect_to_db(self, db_name: str) -> None:
-        """Connects to the database, creates if does not exist."""
+        """Connects to the database, creates if it does not exist."""
         self.create_db(db_name)
 
         self.db_conn = psycopg2.connect(
@@ -60,15 +60,30 @@ class DataBase:
 
         logger.info(f"Successfully connected to database: {db_name}")
 
+    def close_all_db_connections(self, db_name: str) -> None:
+        """Close all the connections to the database.
+
+        This might be required to perform some operations on DB, like drop"""
+        self.psql_cursor.execute(
+            """
+            SELECT pg_terminate_backend(pg_stat_activity.pid)
+            FROM pg_stat_activity
+            WHERE pg_stat_activity.datname = %s;""",
+            (db_name,),
+        )
+        logger.info(f"All connections to DB '{db_name}' were closed.")
+
     def create_db(self, db_name: str) -> None:
         """Creates database if it does not exist."""
         if not self.db_exists(db_name):
             # Prevent sql injection attack by using sql module instead of string concat
             self.psql_cursor.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(db_name)))
+            logger.info(f"Database '{db_name}' was created.")
 
     def drop_db(self, db_name: str) -> None:
         """Drops (deletes) database if exists"""
         if self.db_exists(db_name):
+            self.close_all_db_connections(db_name)
             self.psql_cursor.execute(sql.SQL("DROP DATABASE {}").format(sql.Identifier(db_name)))
         if not self.db_exists(db_name):
             self.db_conn = None
@@ -92,17 +107,21 @@ class DataBase:
             self.connect_to_db(db_name)
         if self._table_exists(table_name):
             return
-        self.db_cursor.execute("CREATE TABLE %s (id serial PRIMARY KEY, data varchar);", table_name)
+        self.db_cursor.execute(
+            sql.SQL("CREATE TABLE {} (id serial PRIMARY KEY, data varchar);").format(
+                sql.Identifier(table_name)
+            )
+        )
         self.db_conn.commit()
+        logger.info(f"Table '{table_name}' was created in DB '{db_name}'")
 
     def add_name(self, name: str, db_name: str, table_name: str) -> None:
 
         self.create_table(db_name, table_name)
 
         self.db_cursor.execute(
-            sql.SQL("INSERT INTO {} (data) VALUES {}").format(
-                sql.Identifier(table_name), sql.Identifier(name)
-            )
+            sql.SQL("INSERT INTO {} (data) VALUES (%s);").format(sql.Identifier(table_name)),
+            (name,),
         )
         self.db_conn.commit()
 
