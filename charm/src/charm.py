@@ -62,15 +62,18 @@ class FastAPIDemoCharm(CharmBase):
         # Provide grafana dashboards over a relation interface
         self._grafana_dashboards = GrafanaDashboardProvider(self, relation_name="grafana-dashboard")
 
-        self.framework.observe(self.on.demo_server_pebble_ready, self._on_demo_server_pebble_ready)
-        self.framework.observe(self.on.config_changed, self._on_config_changed)
-        self.framework.observe(self.on.drop_db_action, self._on_drop_db_action)
-        self.framework.observe(self.on.fetch_db_action, self._on_fetch_db_action)
-
         # Charm events defined in the database requires charm library.
         self.database = DatabaseRequires(self, relation_name="database", database_name="names_db")
         self.framework.observe(self.database.on.database_created, self._on_database_created)
         self.framework.observe(self.database.on.endpoints_changed, self._on_database_created)
+        self.framework.observe(self.on.database_relation_broken, self._on_database_relation_removed)
+
+        self.framework.observe(self.on.demo_server_pebble_ready, self._on_demo_server_pebble_ready)
+        self.framework.observe(self.on.config_changed, self._on_config_changed)
+
+        # events on custom actions that are run via 'juju run-action'
+        self.framework.observe(self.on.drop_db_action, self._on_drop_db_action)
+        self.framework.observe(self.on.get_db_info_action, self._on_get_db_info_action)
 
         self._stored.set_default(db_host=None, db_port=None, db_user=None, db_password=None)
 
@@ -104,6 +107,7 @@ class FastAPIDemoCharm(CharmBase):
 
     @property
     def _pebble_layer(self):
+        logger.info(f"Add following environment to the layer: {self.app_environment}")
         pebble_layer = {
             "summary": "FastAPI demo layer",
             "description": "pebble config layer for FastAPI demo server",
@@ -128,18 +132,31 @@ class FastAPIDemoCharm(CharmBase):
         }
 
     def _on_database_created(self, event: DatabaseCreatedEvent) -> None:
-        logger.info("New endpoint is %s", event.endpoints)
-        # Handle the created database
-        self.app_environment = {
-            "DEMO_SERVER_DB_HOST": event.endpoints,
-            "DEMO_SERVER_DB_USER": event.username,
-            "DEMO_SERVER_DB_PASSWORD": event.password,
-        }
+        if self.config["use-standalone-db"]:
+            # user wants standalone DB
+            return
 
-        self._on_demo_server_pebble_ready(None)
+        logger.info("New PSQL database endpoint is %s", event.endpoints)
+        host, port = event.endpoints.split(":")
+        self._stored.db_host = host
+        self._stored.db_port = port
+        self._stored.db_user = event.username
+        self._stored.db_password = event.password
 
-        # Set active status
-        self.unit.status = ActiveStatus("received database credentials")
+        self.update_app_environment()
+        self._update_layer_and_restart()
+
+    def _on_database_relation_removed(self, event):
+        if self.config["use-standalone-db"]:
+            # user wants standalone DB
+            return
+
+        self._stored.db_host = None
+        self._stored.db_port = None
+        self._stored.db_user = None
+        self._stored.db_password = None
+
+        self.unit.status = WaitingStatus("Waiting for database relation")
 
     def _on_config_changed(self, _):
         """Just an example to show how to deal with changed configuration.
@@ -189,23 +206,22 @@ class FastAPIDemoCharm(CharmBase):
 
     def _update_layer_and_restart(self):
         if self.container.can_connect():
-            layer = self._pebble_layer.to_dict()
-            # Get the current config
+            new_layer = self._pebble_layer.to_dict()
+            # Get the current pebble layer config
             services = self.container.get_plan().to_dict().get("services", {})
-            # Check if there are any changes to services
-            if services != layer["services"]:
+            if services != new_layer["services"]:
                 # Changes were made, add the new layer
                 self.container.add_layer("fastapi_demo", self._pebble_layer, combine=True)
                 logger.info("Added updated layer 'fastapi_demo' to Pebble plan")
-                # Restart it and report a new status to Juju
+
                 self.container.restart("fastapi")
                 logger.info("Restarted 'fastapi' service")
-            # All is well, set an ActiveStatus
+
             self.unit.status = ActiveStatus()
         else:
-            self.unit.status = WaitingStatus("waiting for Pebble in workload container")
+            self.unit.status = WaitingStatus("Waiting for Pebble in workload container")
 
-    def _on_fetch_db_action(self, event):
+    def _on_get_db_info_action(self, event):
         """Example of a custom action that could be defined.
 
         In this case the action will call an API to remove (clean-up) a database.
@@ -214,20 +230,24 @@ class FastAPIDemoCharm(CharmBase):
 
         Learn more about actions at https://juju.is/docs/sdk/actions
         """
-        self.get_db_relation_data()
-        event.set_results(self._stored)
-        self.update_app_environment()
-        self._update_layer_and_restart()
+        event.set_results(
+            {
+                "db-username": self._stored.db_user,
+                "db-password": self._stored.db_password,
+                "db-host": self._stored.db_host,
+                "db-port": self._stored.db_port,
+            }
+        )
 
     def get_db_relation_data(self):
         data = self.database.fetch_relation_data()
         for key, val in data.items():
-            if val["database"] == "names_db":
-                self._stored.db_host = val["host"]
-                self._stored.db_port = val["port"]
-                self._stored.db_user = val["user"]
-                self._stored.db_password = val["password"]
-                break
+            host, port = val["endpoints"].split(":")
+            self._stored.db_host = host
+            self._stored.db_port = port
+            self._stored.db_user = val["username"]
+            self._stored.db_password = val["password"]
+            break
 
     @property
     def version(self) -> str:

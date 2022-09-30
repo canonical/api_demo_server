@@ -15,5 +15,5 @@ drop-db:
       type: integer
       default: 10
 
-fetch-db:
+get-db-info:
   description: Fetches Database relation information
