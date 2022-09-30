@@ -50,11 +50,6 @@ def root():
     return {"message": "Demo API server with prometheus endpoint"}
 
 
-@app.post("/connectdb")
-def connect_to_database():
-    PSQL_DB.connect_to_psql()
-
-
 @app.post("/dropdb")
 def drop_database():
     PSQL_DB.drop_db("names_db")
