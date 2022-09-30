@@ -84,6 +84,7 @@ def get_all_names():
 
 @app.get("/error")
 def cause_error():
+    """Intentionally cause a ZeroDivisionError to test logging and prometheus metrics."""
     return 1 / 0
 
 

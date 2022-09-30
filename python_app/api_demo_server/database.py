@@ -93,7 +93,6 @@ class DataBase:
         logger.info(f"Table '{table_name}' was created in DB '{db_name}'")
 
     def add_name(self, name: str, db_name: str, table_name: str) -> None:
-
         self.create_table(db_name, table_name)
 
         self.db_cursor.execute(
