@@ -40,18 +40,23 @@ class FastAPIDemoCharm(CharmBase):
     def __init__(self, *args):
         super().__init__(*args)
 
+        logger.warning("Charm is initialized with port %s", self.config["server-port"])
+
         self.app_environment = {}
         self.container = self.unit.get_container("demo-server")
 
         # Patch the juju created Kubernetes service to contain the right ports
-        port = ServicePort(8000, name=f"{self.app.name}")
-        self.service_patcher = KubernetesServicePatch(self, [port])
+        port = ServicePort(int(self.config["server-port"]), name=f"{self.app.name}")
+        self.service_patcher = KubernetesServicePatch(
+            self, [port], refresh_event=self.on.config_changed
+        )
 
         # Provide ability for prometheus to be scraped by Prometheus using prometheus_scrape
         self._prometheus_scraping = MetricsEndpointProvider(
             self,
             relation_name="metrics-endpoint",
-            jobs=[{"static_configs": [{"targets": ["*:8000"]}]}],
+            jobs=[{"static_configs": [{"targets": [f"*:{self.config['server-port']}"]}]}],
+            refresh_event=self.on.config_changed,
         )
 
         # Enable log forwarding for Loki and other charms that implement loki_push_api
@@ -107,7 +112,15 @@ class FastAPIDemoCharm(CharmBase):
 
     @property
     def _pebble_layer(self):
-        logger.info(f"Add following environment to the layer: {self.app_environment}")
+        logger.debug(f"Add following environment to the layer: {self.app_environment}")
+        command = " ".join(
+            [
+                "uvicorn",
+                "api_demo_server.app:app",
+                "--host=0.0.0.0",
+                f"--port={self.config['server-port']}",
+            ]
+        )
         pebble_layer = {
             "summary": "FastAPI demo layer",
             "description": "pebble config layer for FastAPI demo server",
@@ -115,7 +128,7 @@ class FastAPIDemoCharm(CharmBase):
                 "fastapi": {
                     "override": "replace",
                     "summary": "fastapi demo",
-                    "command": "uvicorn api_demo_server.app:app --host=0.0.0.0",
+                    "command": command,
                     "startup": "enabled",
                     "environment": self.app_environment,
                 }
@@ -132,10 +145,6 @@ class FastAPIDemoCharm(CharmBase):
         }
 
     def _on_database_created(self, event: DatabaseCreatedEvent) -> None:
-        if self.config["use-standalone-db"]:
-            # user wants standalone DB
-            return
-
         logger.info("New PSQL database endpoint is %s", event.endpoints)
         host, port = event.endpoints.split(":")
         self._stored.db_host = host
@@ -147,10 +156,6 @@ class FastAPIDemoCharm(CharmBase):
         self._update_layer_and_restart()
 
     def _on_database_relation_removed(self, event):
-        if self.config["use-standalone-db"]:
-            # user wants standalone DB
-            return
-
         self._stored.db_host = None
         self._stored.db_port = None
         self._stored.db_user = None
@@ -159,30 +164,18 @@ class FastAPIDemoCharm(CharmBase):
         self.unit.status = WaitingStatus("Waiting for database relation")
 
     def _on_config_changed(self, _):
-        """Just an example to show how to deal with changed configuration.
+        """Update the port on which application is served.
 
-        TEMPLATE-TODO: change this example to suit your needs.
+        Just an example to show how to deal with changed configuration.
+
         If you don't need to handle config, you can remove this method,
         the hook created in __init__.py for it, the corresponding test,
-        and the config.py file.
+        and the config.yaml file.
 
         Learn more about config at https://juju.is/docs/sdk/config
         """
-        use_standalone = self.config["use-standalone-db"]  # see config.yaml
-        ip = self.config["postgres-ip"]
-        port = self.config["postgres-port"]
-        username = self.config["postgres-username"]
-        password = self.config["postgres-password"]
-
-        if use_standalone:
-            self._stored.db_host = ip
-            self._stored.db_port = port
-            self._stored.db_user = username
-            self._stored.db_password = password
-        else:
-            self.get_db_relation_data()
-
-        self.update_app_environment()
+        port = self.config["server-port"]  # see config.yaml
+        logger.debug("New application port is requested: %s", port)
         self._update_layer_and_restart()
 
     def _on_drop_db_action(self, event):
@@ -266,7 +259,7 @@ class FastAPIDemoCharm(CharmBase):
 
     def _request_version(self) -> str:
         """Helper for fetching the version from the running workload using the API."""
-        resp = requests.get("http://localhost:8000/version", timeout=10)
+        resp = requests.get(f"http://localhost:8000/{self.config['server-port']}", timeout=10)
         return resp.json()["version"]
 
 
