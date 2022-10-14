@@ -12,6 +12,8 @@ develop a new k8s charm using the Operator Framework:
     https://discourse.charmhub.io/t/4208
 """
 import logging
+from typing import Dict
+from typing import Optional
 
 import requests
 from charms.data_platform_libs.v0.database_requires import DatabaseCreatedEvent
@@ -37,12 +39,13 @@ class FastAPIDemoCharm(CharmBase):
 
     _stored = StoredState()
 
-    def __init__(self, *args):
+    def __init__(self, *args) -> None:
         super().__init__(*args)
 
         logger.warning("Charm is initialized with port %s", self.config["server-port"])
 
-        self.container = self.unit.get_container("demo-server")
+        self.container = self.unit.get_container("demo-server")  # see 'containers' in metadata.yaml
+        self.pebble_service_name = "fastapi-service"
 
         # Patch the juju created Kubernetes service to contain the right ports
         port = ServicePort(int(self.config["server-port"]), name=f"{self.app.name}")
@@ -72,17 +75,17 @@ class FastAPIDemoCharm(CharmBase):
         self.framework.observe(self.database.on.endpoints_changed, self._on_database_created)
         self.framework.observe(self.on.database_relation_broken, self._on_database_relation_removed)
 
-        self.framework.observe(self.on.demo_server_pebble_ready, self._on_demo_server_pebble_ready)
+        self.framework.observe(self.on.demo_server_pebble_ready, self._update_layer_and_restart)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
 
         # events on custom actions that are run via 'juju run-action'
-        self.framework.observe(self.on.drop_db_action, self._on_drop_db_action)
+        self.framework.observe(self.on.drop_table_action, self._on_drop_table_action)
         self.framework.observe(self.on.get_db_info_action, self._on_get_db_info_action)
 
         self._stored.set_default(db_host=None, db_port=None, db_user=None, db_password=None)
 
     @property
-    def app_environment(self):
+    def app_environment(self) -> Dict[str, Optional[str]]:
         if not all(
             [
                 self._stored.db_host,
@@ -101,7 +104,7 @@ class FastAPIDemoCharm(CharmBase):
         }
         return env_vars
 
-    def get_db_relation_data(self):
+    def get_db_relation_data(self) -> None:
         data = self.database.fetch_relation_data()
         for key, val in data.items():
             host, port = val["endpoints"].split(":")
@@ -113,31 +116,8 @@ class FastAPIDemoCharm(CharmBase):
         else:
             self.unit.status = WaitingStatus("Waiting for database relation")
 
-    def _on_demo_server_pebble_ready(self, event):
-        """Define and start a workload using the Pebble API.
-
-        You'll need to specify the right entrypoint and environment
-        configuration for your specific workload. Tip: you can see the
-        standard entrypoint of an existing container using docker inspect
-
-        Learn more about Pebble layers at https://github.com/canonical/pebble
-        """
-        self.unit.status = MaintenanceStatus("Assembling pod spec")
-        # Add initial Pebble config layer using the Pebble API
-        self.container.add_layer("fastapi_demo", self._pebble_layer, combine=True)
-        # Autostart any services that were defined with startup: enabled
-        self.container.autostart()
-        self.container.replan()
-
-        # add workload version in juju status
-        self.unit.set_workload_version(self.version)
-
-        # Learn more about statuses in the SDK docs:
-        # https://juju.is/docs/sdk/constructs#heading--statuses
-        self.unit.status = ActiveStatus()
-
     @property
-    def _pebble_layer(self):
+    def _pebble_layer(self) -> Layer:
         logger.debug(f"Add following environment to the layer: {self.app_environment}")
         command = " ".join(
             [
@@ -151,7 +131,7 @@ class FastAPIDemoCharm(CharmBase):
             "summary": "FastAPI demo layer",
             "description": "pebble config layer for FastAPI demo server",
             "services": {
-                "fastapi-service": {
+                self.pebble_service_name: {
                     "override": "replace",
                     "summary": "fastapi demo",
                     "command": command,
@@ -162,7 +142,19 @@ class FastAPIDemoCharm(CharmBase):
         }
         return Layer(pebble_layer)
 
-    def _update_layer_and_restart(self):
+    def _update_layer_and_restart(self) -> None:
+        """Define and start a workload using the Pebble API.
+
+        You'll need to specify the right entrypoint and environment
+        configuration for your specific workload. Tip: you can see the
+        standard entrypoint of an existing container using docker inspect
+
+        Learn more about Pebble layers at https://github.com/canonical/pebble
+        """
+
+        # Learn more about statuses in the SDK docs:
+        # https://juju.is/docs/sdk/constructs#heading--statuses
+        self.unit.status = MaintenanceStatus("Assembling pod spec")
         if self.container.can_connect():
             new_layer = self._pebble_layer.to_dict()
             # Get the current pebble layer config
@@ -172,14 +164,20 @@ class FastAPIDemoCharm(CharmBase):
                 self.container.add_layer("fastapi_demo", self._pebble_layer, combine=True)
                 logger.info("Added updated layer 'fastapi_demo' to Pebble plan")
 
-                self.container.restart("fastapi")
-                logger.info("Restarted 'fastapi' service")
+                self.container.restart(self.pebble_service_name)
+                logger.info(f"Restarted '{self.pebble_service_name}' service")
 
+            # add workload version in juju status
+            self.unit.set_workload_version(self.version)
             self.unit.status = ActiveStatus()
         else:
             self.unit.status = WaitingStatus("Waiting for Pebble in workload container")
 
     def _on_database_created(self, event: DatabaseCreatedEvent) -> None:
+        """Set stored states for database info and update pebble layer.
+
+        Event is fired when postgres database was created.
+        """
         logger.info("New PSQL database endpoint is %s", event.endpoints)
         host, port = event.endpoints.split(":")
         self._stored.db_host = host
@@ -189,7 +187,11 @@ class FastAPIDemoCharm(CharmBase):
 
         self._update_layer_and_restart()
 
-    def _on_database_relation_removed(self, event):
+    def _on_database_relation_removed(self, event) -> None:
+        """Set stored states for database info to None and put charm into waiting status.
+
+        Event is fired when relation with postgres is broken.
+        """
         self._stored.db_host = None
         self._stored.db_port = None
         self._stored.db_user = None
@@ -197,7 +199,7 @@ class FastAPIDemoCharm(CharmBase):
 
         self.unit.status = WaitingStatus("Waiting for database relation")
 
-    def _on_config_changed(self, _):
+    def _on_config_changed(self, _) -> None:
         """Update the port on which application is served.
 
         Just an example to show how to deal with changed configuration.
@@ -212,31 +214,8 @@ class FastAPIDemoCharm(CharmBase):
         logger.debug("New application port is requested: %s", port)
         self._update_layer_and_restart()
 
-    def _on_drop_db_action(self, event):
-        """Example of a custom action that could be defined.
-
-        In this case the action will call an API to remove (clean-up) a database.
-        Update status of the action to fail if something goes wrong, otherwise pass a
-        success message to the user.
-
-        Learn more about actions at https://juju.is/docs/sdk/actions
-        """
-        timeout = event.params["timeout"]  # see actions.yaml
-        try:
-            resp = requests.post("http://localhost:8000/dropdb", timeout=int(timeout))
-            if resp.status_code == 200:
-                event.set_results({"success": "Database was dropped successfully."})
-            else:
-                event.fail(f"Request status code is: {resp.status_code}")
-        except Exception as e:
-            event.fail(f"Request failed: {e}")
-
-    def _on_get_db_info_action(self, event):
-        """Example of a custom action that could be defined.
-
-        In this case the action will call an API to remove (clean-up) a database.
-        Update status of the action to fail if something goes wrong, otherwise pass a
-        success message to the user.
+    def _on_get_db_info_action(self, event) -> None:
+        """Show information about database access points.
 
         Learn more about actions at https://juju.is/docs/sdk/actions
         """
@@ -249,11 +228,30 @@ class FastAPIDemoCharm(CharmBase):
             }
         )
 
+    def _on_drop_table_action(self, event) -> None:
+        """Call an API to remove (clean-up) a table in database.
+
+        Update status of the action to fail if something goes wrong, otherwise pass a
+        success message to the user.
+
+        Learn more about actions at https://juju.is/docs/sdk/actions
+        """
+        timeout = event.params["timeout"]  # see actions.yaml
+        try:
+            resp = requests.post(
+                f"http://localhost:{self.config['server-port']}/deletetable", timeout=int(timeout)
+            )
+            if resp.status_code == 200:
+                event.set_results({"success": "Database was dropped successfully."})
+            else:
+                event.fail(f"Request status code is: {resp.status_code}")
+        except Exception as e:
+            event.fail(f"Request failed: {e}")
+
     @property
     def version(self) -> str:
         """Reports the current workload (FastAPI app) version."""
-        container = self.unit.get_container("demo-server")
-        if container.can_connect() and container.get_services("fastapi"):
+        if self.container.can_connect() and self.container.get_services(self.pebble_service_name):
             try:
                 return self._request_version()
             # Catching Exception is not ideal, but we don't care much for the error here, and just

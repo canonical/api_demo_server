@@ -1,17 +1,16 @@
 # Copyright 2022 maksim
 # See LICENSE file for licensing details.
 #
-# TEMPLATE-TODO: change this example to suit your needs.
 # If you don't need actions, you can remove the file entirely.
-# It ties in to the example _on_fortune_action handler in src/charm.py
+# It ties in to `_on_drop_table_action` and `_on_get_db_info_action` handler in src/charm.py
 #
 # Learn more about actions at: https://juju.is/docs/sdk/actions
 
-drop-db:
-  description: Drops apps database using app's API
+drop-table:
+  description: Drops database table with names using app's API
   params:
     timeout:
-      description: "API Request timeout (this is just an example"
+      description: "API Request timeout"
       type: integer
       default: 10
 
