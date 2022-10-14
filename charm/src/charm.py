@@ -42,7 +42,6 @@ class FastAPIDemoCharm(CharmBase):
 
         logger.warning("Charm is initialized with port %s", self.config["server-port"])
 
-        self.app_environment = {}
         self.container = self.unit.get_container("demo-server")
 
         # Patch the juju created Kubernetes service to contain the right ports
@@ -82,6 +81,38 @@ class FastAPIDemoCharm(CharmBase):
 
         self._stored.set_default(db_host=None, db_port=None, db_user=None, db_password=None)
 
+    @property
+    def app_environment(self):
+        if not all(
+            [
+                self._stored.db_host,
+                self._stored.db_port,
+                self._stored.db_user,
+                self._stored.db_password,
+            ]
+        ):
+            self.get_db_relation_data()
+
+        env_vars = {
+            "DEMO_SERVER_DB_HOST": self._stored.db_host,
+            "DEMO_SERVER_DB_PORT": self._stored.db_port,
+            "DEMO_SERVER_DB_USER": self._stored.db_user,
+            "DEMO_SERVER_DB_PASSWORD": self._stored.db_password,
+        }
+        return env_vars
+
+    def get_db_relation_data(self):
+        data = self.database.fetch_relation_data()
+        for key, val in data.items():
+            host, port = val["endpoints"].split(":")
+            self._stored.db_host = host
+            self._stored.db_port = port
+            self._stored.db_user = val["username"]
+            self._stored.db_password = val["password"]
+            break
+        else:
+            self.unit.status = WaitingStatus("Waiting for database relation")
+
     def _on_demo_server_pebble_ready(self, event):
         """Define and start a workload using the Pebble API.
 
@@ -91,11 +122,6 @@ class FastAPIDemoCharm(CharmBase):
 
         Learn more about Pebble layers at https://github.com/canonical/pebble
         """
-        if not self.model.relations["database"]:
-            self.unit.status = WaitingStatus("Waiting for database relation")
-            event.defer()
-            return
-
         self.unit.status = MaintenanceStatus("Assembling pod spec")
         # Add initial Pebble config layer using the Pebble API
         self.container.add_layer("fastapi_demo", self._pebble_layer, combine=True)
@@ -125,7 +151,7 @@ class FastAPIDemoCharm(CharmBase):
             "summary": "FastAPI demo layer",
             "description": "pebble config layer for FastAPI demo server",
             "services": {
-                "fastapi": {
+                "fastapi-service": {
                     "override": "replace",
                     "summary": "fastapi demo",
                     "command": command,
@@ -136,13 +162,22 @@ class FastAPIDemoCharm(CharmBase):
         }
         return Layer(pebble_layer)
 
-    def update_app_environment(self):
-        self.app_environment = {
-            "DEMO_SERVER_DB_HOST": self._stored.db_host,
-            "DEMO_SERVER_DB_PORT": self._stored.db_port,
-            "DEMO_SERVER_DB_USER": self._stored.db_user,
-            "DEMO_SERVER_DB_PASSWORD": self._stored.db_password,
-        }
+    def _update_layer_and_restart(self):
+        if self.container.can_connect():
+            new_layer = self._pebble_layer.to_dict()
+            # Get the current pebble layer config
+            services = self.container.get_plan().to_dict().get("services", {})
+            if services != new_layer["services"]:
+                # Changes were made, add the new layer
+                self.container.add_layer("fastapi_demo", self._pebble_layer, combine=True)
+                logger.info("Added updated layer 'fastapi_demo' to Pebble plan")
+
+                self.container.restart("fastapi")
+                logger.info("Restarted 'fastapi' service")
+
+            self.unit.status = ActiveStatus()
+        else:
+            self.unit.status = WaitingStatus("Waiting for Pebble in workload container")
 
     def _on_database_created(self, event: DatabaseCreatedEvent) -> None:
         logger.info("New PSQL database endpoint is %s", event.endpoints)
@@ -152,7 +187,6 @@ class FastAPIDemoCharm(CharmBase):
         self._stored.db_user = event.username
         self._stored.db_password = event.password
 
-        self.update_app_environment()
         self._update_layer_and_restart()
 
     def _on_database_relation_removed(self, event):
@@ -197,23 +231,6 @@ class FastAPIDemoCharm(CharmBase):
         except Exception as e:
             event.fail(f"Request failed: {e}")
 
-    def _update_layer_and_restart(self):
-        if self.container.can_connect():
-            new_layer = self._pebble_layer.to_dict()
-            # Get the current pebble layer config
-            services = self.container.get_plan().to_dict().get("services", {})
-            if services != new_layer["services"]:
-                # Changes were made, add the new layer
-                self.container.add_layer("fastapi_demo", self._pebble_layer, combine=True)
-                logger.info("Added updated layer 'fastapi_demo' to Pebble plan")
-
-                self.container.restart("fastapi")
-                logger.info("Restarted 'fastapi' service")
-
-            self.unit.status = ActiveStatus()
-        else:
-            self.unit.status = WaitingStatus("Waiting for Pebble in workload container")
-
     def _on_get_db_info_action(self, event):
         """Example of a custom action that could be defined.
 
@@ -232,16 +249,6 @@ class FastAPIDemoCharm(CharmBase):
             }
         )
 
-    def get_db_relation_data(self):
-        data = self.database.fetch_relation_data()
-        for key, val in data.items():
-            host, port = val["endpoints"].split(":")
-            self._stored.db_host = host
-            self._stored.db_port = port
-            self._stored.db_user = val["username"]
-            self._stored.db_password = val["password"]
-            break
-
     @property
     def version(self) -> str:
         """Reports the current workload (FastAPI app) version."""
@@ -259,7 +266,7 @@ class FastAPIDemoCharm(CharmBase):
 
     def _request_version(self) -> str:
         """Helper for fetching the version from the running workload using the API."""
-        resp = requests.get(f"http://localhost:8000/{self.config['server-port']}", timeout=10)
+        resp = requests.get(f"http://localhost:{self.config['server-port']}/version", timeout=10)
         return resp.json()["version"]
 
 
