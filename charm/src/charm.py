@@ -261,7 +261,6 @@ class FastAPIDemoCharm(CharmBase):
             except Exception as e:
                 logger.warning("unable to get version from API: %s", str(e))
                 logger.exception(e)
-                return ""
         return ""
 
     def _request_version(self) -> str:
