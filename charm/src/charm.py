@@ -42,7 +42,7 @@ class FastAPIDemoCharm(CharmBase):
     def __init__(self, *args) -> None:
         super().__init__(*args)
 
-        logger.warning("Charm is initialized with port %s", self.config["server-port"])
+        logger.info("Charm is initialized with port %s", self.config["server-port"])
 
         self.container = self.unit.get_container("demo-server")  # see 'containers' in metadata.yaml
         self.pebble_service_name = "fastapi-service"
@@ -106,7 +106,10 @@ class FastAPIDemoCharm(CharmBase):
 
     def get_db_relation_data(self) -> None:
         data = self.database.fetch_relation_data()
+        logger.warning("Got following database data: %s", data)
         for key, val in data.items():
+            if not val:
+                continue
             host, port = val["endpoints"].split(":")
             self._stored.db_host = host
             self._stored.db_port = port
@@ -115,6 +118,7 @@ class FastAPIDemoCharm(CharmBase):
             break
         else:
             self.unit.status = WaitingStatus("Waiting for database relation")
+            exit(0)  # todo replace with proper exit status
 
     @property
     def _pebble_layer(self) -> Layer:
@@ -142,7 +146,7 @@ class FastAPIDemoCharm(CharmBase):
         }
         return Layer(pebble_layer)
 
-    def _update_layer_and_restart(self) -> None:
+    def _update_layer_and_restart(self, event) -> None:
         """Define and start a workload using the Pebble API.
 
         You'll need to specify the right entrypoint and environment
@@ -185,7 +189,7 @@ class FastAPIDemoCharm(CharmBase):
         self._stored.db_user = event.username
         self._stored.db_password = event.password
 
-        self._update_layer_and_restart()
+        self._update_layer_and_restart(None)
 
     def _on_database_relation_removed(self, event) -> None:
         """Set stored states for database info to None and put charm into waiting status.
@@ -212,7 +216,7 @@ class FastAPIDemoCharm(CharmBase):
         """
         port = self.config["server-port"]  # see config.yaml
         logger.debug("New application port is requested: %s", port)
-        self._update_layer_and_restart()
+        self._update_layer_and_restart(None)
 
     def _on_get_db_info_action(self, event) -> None:
         """Show information about database access points.
