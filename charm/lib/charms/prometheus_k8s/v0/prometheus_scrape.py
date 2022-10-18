@@ -1506,8 +1506,8 @@ class MetricsEndpointProvider(Object):
         self._alert_rules_path = alert_rules_path
         self._relation_name = relation_name
         # sanitize job configurations to the supported subset of parameters
-        self._user_jobs = jobs or []
-        self._jobs = PrometheusConfig.sanitize_scrape_configs(self._user_jobs)
+        jobs = [] if jobs is None else jobs
+        self._jobs = PrometheusConfig.sanitize_scrape_configs(jobs)
 
         if external_url:
             external_url = (
@@ -1643,21 +1643,6 @@ class MetricsEndpointProvider(Object):
         return True
 
     @property
-    def jobs(self):
-        return self._user_jobs
-
-    @jobs.setter
-    def jobs(self, jobs):
-        """Set prometheus scrape jobs.
-
-        Sanitize job configurations to the supported subset of parameters.
-        """
-        self._user_jobs = jobs or []
-        logger.info("New scrape jobs are set: %s", jobs)
-        self._jobs = PrometheusConfig.sanitize_scrape_configs(self._user_jobs)
-        self._set_scrape_job_spec(None)
-
-    @property
     def _scrape_jobs(self) -> list:
         """Fetch list of scrape jobs.
 
@@ -1665,7 +1650,7 @@ class MetricsEndpointProvider(Object):
            A list of dictionaries, where each dictionary specifies a
            single scrape job for Prometheus.
         """
-        return self._jobs or [DEFAULT_JOB]
+        return self._jobs if self._jobs else [DEFAULT_JOB]
 
     @property
     def _scrape_metadata(self) -> dict:
