@@ -122,7 +122,7 @@ class FastAPIDemoCharm(CharmBase):
 
     @property
     def _pebble_layer(self) -> Layer:
-        logger.debug(f"Add following environment to the layer: {self.app_environment}")
+        logger.debug(f"Add following environment to the layer: {(env := self.app_environment)}")
         command = " ".join(
             [
                 "uvicorn",
@@ -140,7 +140,7 @@ class FastAPIDemoCharm(CharmBase):
                     "summary": "fastapi demo",
                     "command": command,
                     "startup": "enabled",
-                    "environment": self.app_environment,
+                    "environment": env,
                 }
             },
         }
