@@ -20,7 +20,6 @@ DB_PASSWORD = os.environ.get("DEMO_SERVER_DB_PASSWORD", "mysecretpassword")
 class DataBase:
     def __init__(self) -> None:
         self.db_conn = None
-        self.db_cursor = None
 
     def connect_to_db(self, db_name: str) -> None:
         """Connects to the database, creates if it does not exist."""
@@ -40,9 +39,21 @@ class DataBase:
                 self.connect_to_db(db_name)
             else:
                 raise
-        self.db_cursor = self.db_conn.cursor()
 
         logger.info(f"Successfully connected to database: {db_name}")
+
+    @property
+    def can_connect(self):
+        """Ensure that database connection is alive."""
+        return self.db_conn and not self.db_conn.closed
+
+    @property
+    def db_cursor(self):
+        """Returns a database cursor.
+
+        Cursors are lightweight, create new cursor each time.
+        """
+        return self.db_conn.cursor()
 
     @staticmethod
     def create_db(db_name: str) -> None:
@@ -59,7 +70,6 @@ class DataBase:
 
     def _table_exists(self, table_name: str) -> bool:
         """Checks if the table already exists."""
-        assert self.db_cursor
         self.db_cursor.execute(
             "SELECT EXISTS (SELECT relname FROM pg_class WHERE relname=%s);", (table_name,)
         )
@@ -70,7 +80,7 @@ class DataBase:
 
     def delete_table(self, db_name: str, table_name: str) -> None:
         """Delete a table in database `db_name`"""
-        if self.db_cursor is None:
+        if not self.can_connect:
             self.connect_to_db(db_name)
 
         self.db_cursor.execute(
@@ -80,7 +90,7 @@ class DataBase:
 
     def create_table(self, db_name: str, table_name: str) -> None:
         """Create a table in database `db_name` if it doesn't already exist."""
-        if self.db_cursor is None:
+        if not self.can_connect:
             self.connect_to_db(db_name)
         if self._table_exists(table_name):
             return
