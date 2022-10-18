@@ -72,9 +72,9 @@ def delete_table():
 
 
 @app.post("/addname/")
-def add_name(username: str = Form()):
-    PSQL_DB.add_name(username, db_name="names_db", table_name="names")
-    return {"username": username}
+def add_name(name: str = Form()):
+    PSQL_DB.add_name(name, db_name="names_db", table_name="names")
+    return {"name added": name}
 
 
 @app.get("/names")
