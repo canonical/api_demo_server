@@ -101,7 +101,11 @@ class SomeCharm(CharmBase):
   def __init__(self, *args):
     # ...
     port = ServicePort(int(self.config["charm-config-port"]), name=f"{self.app.name}")
-    self.service_patcher = KubernetesServicePatch(self, [port], refresh_event=self.on.config_changed)
+    self.service_patcher = KubernetesServicePatch(
+        self,
+        [port],
+        refresh_event=self.on.config_changed
+    )
     # ...
 ```
 
@@ -130,7 +134,7 @@ from lightkube.models.meta_v1 import ObjectMeta
 from lightkube.resources.core_v1 import Service
 from lightkube.types import PatchType
 from ops.charm import CharmBase
-from ops.framework import Object, BoundEvent
+from ops.framework import BoundEvent, Object
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +146,7 @@ LIBAPI = 1
 
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 3
+LIBPATCH = 4
 
 ServiceType = Literal["ClusterIP", "LoadBalancer"]
 
@@ -159,9 +163,8 @@ class KubernetesServicePatch(Object):
         additional_labels: dict = None,
         additional_selectors: dict = None,
         additional_annotations: dict = None,
-            *,
-            refresh_event: Optional[Union[BoundEvent, List[BoundEvent]]] = None
-
+        *,
+        refresh_event: Optional[Union[BoundEvent, List[BoundEvent]]] = None,
     ):
         """Constructor for KubernetesServicePatch.
 
@@ -178,7 +181,8 @@ class KubernetesServicePatch(Object):
                 "app.kubernetes.io/name" is set to the service name)
             additional_annotations: Annotations to be added to the kubernetes service.
             refresh_event: an optional bound event or list of bound events which
-                will be observed to re-apply the patch (eg on port change)
+                will be observed to re-apply the patch (e.g. on port change).
+                The `install` and `upgrade-charm` events would be observed regardless.
         """
         super().__init__(charm, "kubernetes-service-patch")
         self.charm = charm
