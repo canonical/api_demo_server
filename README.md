@@ -26,3 +26,14 @@ Start demo server:
 ```
 docker run --rm -e DEMO_SERVER_DB_HOST=<postgres container IP> -p 8000:8000 api_demo_server
 ```
+
+# Configuration via environment variables
+You can configure application by applying following environment variables:
+
+| Environment Variable    	| Value             	| Description                                     	|
+|-------------------------	|-------------------	|-------------------------------------------------	|
+| DEMO_SERVER_LOGFILE     	| \<path/to/log.log> 	| Path to the file where logs should be written   	|
+| DEMO_SERVER_DB_HOST     	| \<Host IP>         	| IP address of the host where Database is hosted 	|
+| DEMO_SERVER_DB_PORT     	| \<Host Port>       	| Port of the host where Database is hosted       	|
+| DEMO_SERVER_DB_USER     	| \<Username>        	| Username that has access to `names` Database    	|
+| DEMO_SERVER_DB_PASSWORD 	| \<Password>        	| Password to the `DEMO_SERVER_DB_USER` user      	|
