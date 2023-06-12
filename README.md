@@ -37,3 +37,9 @@ You can configure application by applying following environment variables:
 | DEMO_SERVER_DB_PORT     	| \<Host Port>       	| Port of the host where Database is hosted       	|
 | DEMO_SERVER_DB_USER     	| \<Username>        	| Username that has access to `names` Database    	|
 | DEMO_SERVER_DB_PASSWORD 	| \<Password>        	| Password to the `DEMO_SERVER_DB_USER` user      	|
+
+# Publish to registry
+
+```
+docker buildx build -t ghrc.io/canonical/api_demo_server:1.0.0 --platform linux/amd64,linux/arm64,linux/ppc64le --push  .
+```
