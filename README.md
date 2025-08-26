@@ -41,5 +41,5 @@ You can configure application by applying following environment variables:
 # Publish to registry
 
 ```
-docker buildx build -t ghrc.io/canonical/api_demo_server:1.0.0 --platform linux/amd64,linux/arm64,linux/ppc64le --push  .
+docker buildx build -t ghcr.io/canonical/api_demo_server:1.0.0 --platform linux/amd64,linux/arm64,linux/ppc64le --push  .
 ```
