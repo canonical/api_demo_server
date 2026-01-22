@@ -1,4 +1,4 @@
-from --platform=$BUILDPLATFORM ubuntu:22.04
+FROM --platform=$BUILDPLATFORM ubuntu:22.04
 LABEL org.opencontainers.image.source=https://github.com/canonical/api_demo_server
 
 RUN apt-get update && apt-get install -y \
