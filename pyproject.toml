@@ -6,8 +6,8 @@ build-backend = "flit_core.buildapi"
 name = "api_demo_server"
 description = """FastAPI demo server"""
 authors = [{name = "Maksim Beliaev", email = "beliaev.m.s@gmail.com"}]
-license = {file = "LICENSE"}
-classifiers = ["License :: OSI Approved :: MIT License"]
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 dynamic = ["version"]
 
 dependencies = [
