@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     python3.10 \
     python3-pip
 COPY ./pyproject.toml .
+COPY ./LICENSE .
 
 # create dummy project folder just to keep the layer with dependencies untouched until pyproject is changed
 RUN mkdir api_demo_server && echo "__version__ = '0.0.1.dev0'" > api_demo_server/__init__.py
