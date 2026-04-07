@@ -12,7 +12,7 @@ dynamic = ["version"]
 
 dependencies = [
     "fastapi==0.85",
-    "uvicorn[standard]==0.18.3",
+    "uvicorn[standard]==0.42.0",
     "python-multipart==0.0.5",
     "psycopg2-binary==2.9.9",
     "starlette_exporter==0.14.0"
