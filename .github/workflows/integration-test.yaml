@@ -1,0 +1,73 @@
+name: Run integration tests
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+
+permissions: {}
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Create Docker network
+        run: docker network create demo-net
+
+      - name: Start PostgreSQL
+        run: |
+          docker run --name postgres \
+            --network demo-net \
+            --env POSTGRES_PASSWORD=mysecretpassword \
+            --detach postgres:16
+          # Wait for postgres to be ready
+          for i in $(seq 1 30); do
+            docker exec postgres pg_isready --username postgres && break
+            if [ "$i" -eq 30 ]; then echo "PostgreSQL did not become ready in time" && exit 1; fi
+            sleep 1
+          done
+
+      - name: Build demo server image
+        run: docker build --tag api_demo_server .
+
+      - name: Start demo server
+        run: |
+          docker run --name demo-server \
+            --network demo-net \
+            --env DEMO_SERVER_DB_HOST=postgres \
+            --publish 8000:8000 \
+            --detach api_demo_server
+          # Wait for the server to be ready
+          for i in $(seq 1 30); do
+            curl --silent --fail http://localhost:8000/version && break
+            if [ "$i" -eq 30 ]; then echo "Demo server did not become ready in time" && exit 1; fi
+            sleep 1
+          done
+
+      - name: Test /version endpoint
+        run: |
+          response=$(curl --silent --fail http://localhost:8000/version)
+          echo "Response: $response"
+          echo "$response" | grep --quiet '"version"'
+
+      - name: Test database endpoints
+        run: |
+          # Create the names table
+          curl --silent --fail --request POST http://localhost:8000/createtable
+
+          # Add a name
+          curl --silent --fail --request POST http://localhost:8000/addname/ --data "name=Alice"
+
+          # Retrieve names and verify Alice is present
+          response=$(curl --silent --fail http://localhost:8000/names)
+          echo "Response: $response"
+          echo "$response" | grep --quiet "Alice"
+
+      - name: Show server logs on failure
+        if: failure()
+        run: docker logs demo-server
