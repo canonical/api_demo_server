@@ -27,50 +27,50 @@ jobs:
         run: |
           docker run --name postgres \
             --network demo-net \
-            -e POSTGRES_PASSWORD=mysecretpassword \
-            -d postgres:16
+            --env POSTGRES_PASSWORD=mysecretpassword \
+            --detach postgres:16
           # Wait for postgres to be ready
           for i in $(seq 1 30); do
-            docker exec postgres pg_isready -U postgres && break
+            docker exec postgres pg_isready --username postgres && break
             if [ "$i" -eq 30 ]; then echo "PostgreSQL did not become ready in time" && exit 1; fi
             sleep 1
           done
 
       - name: Build demo server image
-        run: docker build -t api_demo_server .
+        run: docker build --tag api_demo_server .
 
       - name: Start demo server
         run: |
           docker run --name demo-server \
             --network demo-net \
-            -e DEMO_SERVER_DB_HOST=postgres \
-            -p 8000:8000 \
-            -d api_demo_server
+            --env DEMO_SERVER_DB_HOST=postgres \
+            --publish 8000:8000 \
+            --detach api_demo_server
           # Wait for the server to be ready
           for i in $(seq 1 30); do
-            curl -sf http://localhost:8000/version && break
+            curl --silent --fail http://localhost:8000/version && break
             if [ "$i" -eq 30 ]; then echo "Demo server did not become ready in time" && exit 1; fi
             sleep 1
           done
 
       - name: Test /version endpoint
         run: |
-          response=$(curl -sf http://localhost:8000/version)
+          response=$(curl --silent --fail http://localhost:8000/version)
           echo "Response: $response"
-          echo "$response" | grep -q '"version"'
+          echo "$response" | grep --quiet '"version"'
 
       - name: Test database endpoints
         run: |
           # Create the names table
-          curl -sf -X POST http://localhost:8000/createtable
+          curl --silent --fail --request POST http://localhost:8000/createtable
 
           # Add a name
-          curl -sf -X POST http://localhost:8000/addname/ -d "name=Alice"
+          curl --silent --fail --request POST http://localhost:8000/addname/ --data "name=Alice"
 
           # Retrieve names and verify Alice is present
-          response=$(curl -sf http://localhost:8000/names)
+          response=$(curl --silent --fail http://localhost:8000/names)
           echo "Response: $response"
-          echo "$response" | grep -q "Alice"
+          echo "$response" | grep --quiet "Alice"
 
       - name: Show server logs on failure
         if: failure()
