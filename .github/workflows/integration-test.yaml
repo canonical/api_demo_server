@@ -16,13 +16,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Create Docker network
-        run: docker network create demo-net
-
       - name: Start PostgreSQL
         run: |
           docker run --name postgres \
-            --network demo-net \
+            --network host \
             --env POSTGRES_PASSWORD=mysecretpassword \
             --detach postgres:16
           # Wait for postgres to be ready
@@ -38,9 +35,8 @@ jobs:
       - name: Start demo server
         run: |
           docker run --name demo-server \
-            --network demo-net \
-            --env DEMO_SERVER_DB_HOST=postgres \
-            --publish 8000:8000 \
+            --network host \
+            --env DEMO_SERVER_DB_HOST=localhost \
             --detach api_demo_server
           # Wait for the server to be ready
           for i in $(seq 1 30); do
