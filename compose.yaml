@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: mysecretpassword
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 1s
+      timeout: 5s
+      retries: 30
+
+  demo-server:
+    build: .
+    environment:
+      DEMO_SERVER_DB_HOST: postgres
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent --fail http://localhost:8000/version >/dev/null"]
+      interval: 1s
+      timeout: 5s
+      retries: 30

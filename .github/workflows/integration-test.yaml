@@ -16,38 +16,8 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Start PostgreSQL
-        run: |
-          docker run --name postgres \
-            --network host \
-            --env POSTGRES_PASSWORD=mysecretpassword \
-            --detach postgres:16
-          # Wait for postgres to be ready
-          for i in {1..30}; do
-            docker exec postgres pg_isready --username postgres && break
-            sleep 1
-          done || {
-            echo "PostgreSQL did not become ready in time" >&2
-            exit 1
-          }
-
-      - name: Build demo server image
-        run: docker build --tag api_demo_server .
-
-      - name: Start demo server
-        run: |
-          docker run --name demo-server \
-            --network host \
-            --env DEMO_SERVER_DB_HOST=localhost \
-            --detach api_demo_server
-          # Wait for the server to be ready
-          for i in {1..30}; do
-            curl --silent --fail http://localhost:8000/version && break
-            sleep 1
-          done || {
-            echo "Demo server did not become ready in time" >&2
-            exit 1
-          }
+      - name: Start services
+        run: docker compose up --build --detach --wait
 
       - name: Test database endpoints
         run: |
@@ -64,4 +34,4 @@ jobs:
 
       - name: Show server logs on failure
         if: failure()
-        run: docker logs demo-server
+        run: docker compose logs
