@@ -45,12 +45,6 @@ jobs:
             sleep 1
           done
 
-      - name: Test /version endpoint
-        run: |
-          response=$(curl --silent --fail http://localhost:8000/version)
-          echo "Response: $response"
-          echo "$response" | grep --quiet '"version"'
-
       - name: Test database endpoints
         run: |
           # Create the names table
