@@ -11,7 +11,7 @@ license-files = ["LICENSE"]
 dynamic = ["version"]
 
 dependencies = [
-    "fastapi==0.85",
+    "fastapi==0.135.3",
     "uvicorn[standard]==0.18.3",
     "python-multipart==0.0.5",
     "psycopg2-binary==2.9.12",
