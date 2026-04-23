@@ -23,11 +23,13 @@ jobs:
             --env POSTGRES_PASSWORD=mysecretpassword \
             --detach postgres:16
           # Wait for postgres to be ready
-          for i in $(seq 1 30); do
+          for i in {1..30}; do
             docker exec postgres pg_isready --username postgres && break
-            if [ "$i" -eq 30 ]; then echo "PostgreSQL did not become ready in time" && exit 1; fi
             sleep 1
-          done
+          done || {
+            echo "PostgreSQL did not become ready in time" >&2
+            exit 1
+          }
 
       - name: Build demo server image
         run: docker build --tag api_demo_server .
@@ -39,11 +41,13 @@ jobs:
             --env DEMO_SERVER_DB_HOST=localhost \
             --detach api_demo_server
           # Wait for the server to be ready
-          for i in $(seq 1 30); do
+          for i in {1..30}; do
             curl --silent --fail http://localhost:8000/version && break
-            if [ "$i" -eq 30 ]; then echo "Demo server did not become ready in time" && exit 1; fi
             sleep 1
-          done
+          done || {
+            echo "Demo server did not become ready in time" >&2
+            exit 1
+          }
 
       - name: Test database endpoints
         run: |
