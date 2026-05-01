@@ -15,7 +15,7 @@ dependencies = [
     "uvicorn[standard]==0.45.0",
     "python-multipart==0.0.26",
     "psycopg2-binary==2.9.12",
-    "starlette_exporter==0.14.0"
+    "starlette_exporter==0.23.0"
 ]
 
 # development dependencies
