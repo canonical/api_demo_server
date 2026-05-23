@@ -17,13 +17,3 @@ dependencies = [
     "psycopg2-binary==2.9.12",
     "starlette_exporter==0.23.0"
 ]
-
-# development dependencies
-[project.optional-dependencies]
-test = [
-    "pre-commit",
-]
-
-deploy = [
-    "flit==3.12.0",
-]
