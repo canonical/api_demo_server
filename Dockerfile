@@ -8,8 +8,9 @@ COPY ./pyproject.toml .
 COPY ./LICENSE .
 
 # create dummy project folder just to keep the layer with dependencies untouched until pyproject is changed
-RUN mkdir api_demo_server && echo "__version__ = '0.0.1.dev0'" > api_demo_server/__init__.py
+RUN mkdir -p src/api_demo_server && echo "__version__ = '0.0.1.dev0'" > src/api_demo_server/__init__.py
 RUN python3 -m pip install .
-COPY ./api_demo_server ./api_demo_server
+COPY ./src/api_demo_server ./src/api_demo_server
+WORKDIR /src
 EXPOSE 8000
 ENTRYPOINT ["uvicorn", "api_demo_server.app:app", "--host=0.0.0.0"]

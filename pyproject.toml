@@ -21,3 +21,6 @@ requires = [
     "flit_core >=3.2,<4",
 ]
 build-backend = "flit_core.buildapi"
+
+[tool.flit.module]
+name = "api_demo_server"
