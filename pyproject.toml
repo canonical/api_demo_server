@@ -16,6 +16,12 @@ dependencies = [
     "starlette_exporter==0.23.0"
 ]
 
+[dependency-groups]
+dev = [
+    "ruff>=0.15.14,<1",
+    "ty>=0.0.39,<1",
+]
+
 [build-system]
 requires = [
     "flit_core >=3.2,<4",
@@ -24,3 +30,6 @@ build-backend = "flit_core.buildapi"
 
 [tool.flit.module]
 name = "api_demo_server"
+
+[tool.ruff]
+line-length = 99
