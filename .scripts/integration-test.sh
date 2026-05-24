@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-set -xueo pipefail
+set -euo pipefail
 
-cleanup() {
+cleanup_docker() {
     docker compose down --volumes --remove-orphans
 }
 
-trap cleanup EXIT
-
+set -x
+trap cleanup_docker EXIT
 docker compose up --build --detach --wait
 curl --silent --fail --request POST http://localhost:8000/createtable
 curl --silent --fail --request POST http://localhost:8000/addname/ --data "name=Alice"
