@@ -7,7 +7,7 @@ services:
       test: ["CMD-SHELL", "pg_isready --username postgres"]
       interval: 1s
       timeout: 5s
-      retries: 30
+      retries: 10
 
   demo-server:
     build: .
@@ -22,4 +22,4 @@ services:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/version')"]
       interval: 1s
       timeout: 5s
-      retries: 30
+      retries: 10
