@@ -19,9 +19,8 @@ jobs:
       - name: Install Rockcraft
         run: sudo snap install rockcraft --classic
 
-      - name: Install LXD
+      - name: Prepare LXD
         run: |
-          sudo snap install lxd
           sudo lxd waitready
           sudo lxd init --auto
           sudo usermod --append --groups lxd "$USER"
