@@ -16,17 +16,8 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install Rockcraft
-        run: sudo snap install rockcraft --classic
-
-      - name: Prepare LXD
-        run: |
-          sudo lxd waitready
-          sudo lxd init --auto
-          sudo usermod --append --groups lxd "$USER"
-
       - name: Pack the rock
-        run: sg lxd -c 'rockcraft pack'
+        uses: canonical/craft-actions/rockcraft-pack@210d55fa6cb7a1ab39e3194315d6a03249af3d34
 
       - name: Run the integration test
         run: make integration
