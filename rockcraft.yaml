@@ -1,0 +1,39 @@
+name: api-demo-server
+base: ubuntu@24.04
+version: "2.0.0.dev0"
+summary: FastAPI demo server
+description: A web server that can be integrated with a PostgreSQL database.
+license: Apache-2.0
+platforms:
+  amd64:
+  arm64:
+  ppc64el:
+
+parts:
+  api-demo-server:
+    source: .
+    plugin: uv
+    build-snaps:
+      - astral-uv
+    stage-packages:
+      - python3-venv
+
+services:
+  api-demo-server:
+    override: replace
+    summary: FastAPI demo server
+    command: /bin/uvicorn api_demo_server.app:app --host 0.0.0.0 --port 8000
+    startup: enabled
+    on-check-failure:
+      api-demo-server-up: restart
+
+# This check is internal to the container.
+# It doesn't mean the container is ready to process external requests.
+checks:
+  api-demo-server-up:
+    override: replace
+    period: 1s
+    timeout: 5s
+    threshold: 5
+    http:
+      url: http://127.0.0.1:8000/version
