@@ -16,5 +16,11 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Install Rockcraft
+        run: sudo snap install rockcraft --classic
+
+      - name: Pack the rock
+        run: rockcraft pack
+
       - name: Run the integration test
         run: make integration
