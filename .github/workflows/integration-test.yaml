@@ -19,8 +19,15 @@ jobs:
       - name: Install Rockcraft
         run: sudo snap install rockcraft --classic
 
+      - name: Install LXD
+        run: |
+          sudo snap install lxd
+          sudo lxd waitready
+          sudo lxd init --auto
+          sudo usermod --append --groups lxd "$USER"
+
       - name: Pack the rock
-        run: rockcraft pack
+        run: sg lxd -c 'rockcraft pack'
 
       - name: Run the integration test
         run: make integration
