@@ -1,29 +1,35 @@
-[build-system]
-requires = ["flit_core >=3.2,<4"]
-build-backend = "flit_core.buildapi"
-
 [project]
 name = "api_demo_server"
-description = """FastAPI demo server"""
-authors = [{name = "Maksim Beliaev", email = "beliaev.m.s@gmail.com"}]
+dynamic = ["version"]
+description = "FastAPI demo server"
+authors = [
+    { name = "The Charm Tech team at Canonical Ltd." },
+]
 license = "Apache-2.0"
 license-files = ["LICENSE"]
-dynamic = ["version"]
-
+requires-python = ">=3.10"
 dependencies = [
     "fastapi==0.136.1",
-    "uvicorn[standard]==0.46.0",
+    "uvicorn==0.46.0",
     "python-multipart==0.0.27",
     "psycopg2-binary==2.9.12",
     "starlette_exporter==0.23.0"
 ]
 
-# development dependencies
-[project.optional-dependencies]
-test = [
-    "pre-commit",
+[dependency-groups]
+dev = [
+    "ruff>=0.15.14,<1",
+    "ty>=0.0.39,<1",
 ]
 
-deploy = [
-    "flit==3.12.0",
+[build-system]
+requires = [
+    "flit_core >=3.2,<4",
 ]
+build-backend = "flit_core.buildapi"
+
+[tool.flit.module]
+name = "api_demo_server"
+
+[tool.ruff]
+line-length = 99

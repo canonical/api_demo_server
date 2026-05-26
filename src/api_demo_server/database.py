@@ -5,6 +5,7 @@ from typing import Tuple
 
 import psycopg2
 from psycopg2 import sql
+from psycopg2.extensions import connection as PGConnection
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 # set logger to be configurable from external
@@ -19,7 +20,7 @@ DB_PASSWORD = os.environ.get("DEMO_SERVER_DB_PASSWORD", "mysecretpassword")
 
 class DataBase:
     def __init__(self) -> None:
-        self.db_conn = None
+        self.db_conn: PGConnection | None = None
 
     def connect_to_db(self, db_name: str) -> None:
         """Connects to the database, creates if it does not exist."""
@@ -43,9 +44,14 @@ class DataBase:
         logger.info(f"Successfully connected to database: {db_name}")
 
     @property
-    def can_connect(self):
+    def can_connect(self) -> bool:
         """Ensure that database connection is alive."""
-        return self.db_conn and not self.db_conn.closed
+        return self.db_conn is not None and not self.db_conn.closed
+
+    def _require_connection(self) -> PGConnection:
+        if self.db_conn is None:
+            raise RuntimeError("Database connection has not been initialized")
+        return self.db_conn
 
     @staticmethod
     def create_db(db_name: str) -> None:
@@ -62,9 +68,10 @@ class DataBase:
 
     def _table_exists(self, table_name: str) -> bool:
         """Checks if the table already exists."""
-        with self.db_conn.cursor() as cursor:
+        with self._require_connection().cursor() as cursor:
             cursor.execute(
-                "SELECT EXISTS (SELECT relname FROM pg_class WHERE relname=%s);", (table_name,)
+                "SELECT EXISTS (SELECT relname FROM pg_class WHERE relname=%s);",
+                (table_name,),
             )
             if cursor.fetchone()[0]:
                 logger.info(f"Table '{table_name}' already exists.")
@@ -76,7 +83,7 @@ class DataBase:
         if not self.can_connect:
             self.connect_to_db(db_name)
 
-        with self.db_conn.cursor() as cursor:
+        with self._require_connection().cursor() as cursor:
             cursor.execute(sql.SQL("DROP TABLE IF EXISTS {};").format(sql.Identifier(table_name)))
         logger.info(f"Table '{table_name}' is deleted")
 
@@ -87,7 +94,7 @@ class DataBase:
         if self._table_exists(table_name):
             return
 
-        with self.db_conn.cursor() as cursor:
+        with self._require_connection().cursor() as cursor:
             cursor.execute(
                 sql.SQL("CREATE TABLE {} (id serial PRIMARY KEY, data varchar);").format(
                     sql.Identifier(table_name)
@@ -98,7 +105,7 @@ class DataBase:
     def add_name(self, name: str, db_name: str, table_name: str) -> None:
         self.create_table(db_name, table_name)
 
-        with self.db_conn.cursor() as cursor:
+        with self._require_connection().cursor() as cursor:
             cursor.execute(
                 sql.SQL("INSERT INTO {} (data) VALUES (%s);").format(sql.Identifier(table_name)),
                 (name,),
@@ -106,6 +113,6 @@ class DataBase:
 
     def all_names(self, db_name: str, table_name: str) -> List[Tuple[int, str]]:
         self.create_table(db_name, table_name)
-        with self.db_conn.cursor() as cursor:
+        with self._require_connection().cursor() as cursor:
             cursor.execute(sql.SQL("SELECT * FROM {}").format(sql.Identifier(table_name)))
             return cursor.fetchall()

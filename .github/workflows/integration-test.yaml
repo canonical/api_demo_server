@@ -1,4 +1,4 @@
-name: Run integration tests
+name: Integration test
 
 on:
   push:
@@ -16,22 +16,5 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Start services
-        run: docker compose up --build --detach --wait
-
-      - name: Test database endpoints
-        run: |
-          # Create the names table
-          curl --silent --fail --request POST http://localhost:8000/createtable
-
-          # Add a name
-          curl --silent --fail --request POST http://localhost:8000/addname/ --data "name=Alice"
-
-          # Retrieve names and verify Alice is present
-          response=$(curl --silent --fail http://localhost:8000/names)
-          echo "Response: $response"
-          echo "$response" | grep --quiet "Alice"
-
-      - name: Show server logs on failure
-        if: failure()
-        run: docker compose logs
+      - name: Run the integration test
+        run: make integration
