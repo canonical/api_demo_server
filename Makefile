@@ -11,5 +11,4 @@ lint:
 	uv run ty check
 
 integration:
-	.scripts/register-rock.sh
 	.scripts/test-compose.sh
