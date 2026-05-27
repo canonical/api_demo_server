@@ -2,4 +2,4 @@ summary: Integration test
 
 execute: |
   cd "$PROJECT_PATH"
-  ROCK_PATH="$CRAFT_ARTIFACT" make integration
+  ROCK_PATH="$CRAFT_ARTIFACT" .scripts/integration-test.sh
