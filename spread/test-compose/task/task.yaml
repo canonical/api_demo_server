@@ -1,5 +1,0 @@
-summary: Compose and verify
-
-execute: |
-  cd "$PROJECT_PATH"
-  ROCK_PATH="$CRAFT_ARTIFACT" .scripts/test-compose.sh

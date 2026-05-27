@@ -11,4 +11,4 @@ lint:
 	uv run ty check
 
 integration:
-	.scripts/test-compose.sh
+	.scripts/integration-test.sh

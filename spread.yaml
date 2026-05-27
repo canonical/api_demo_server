@@ -7,8 +7,8 @@ backends:
       - ubuntu-24.04:
 
 suites:
-  spread/test-compose/:
-    summary: Test the integration with PostgreSQL
+  spread/integration-test/:
+    summary: Environment for the integration test
 
     prepare: |
       sudo snap install docker
