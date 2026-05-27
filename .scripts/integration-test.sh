@@ -25,7 +25,7 @@ fi
 
 set -x
 rockcraft.skopeo --insecure-policy \
-    copy "oci-archive:${rock_path}" "docker-daemon:api-demo-server:latest"
+    copy "oci-archive:${rock_path}" "docker-daemon:api-demo-server:integration"
 trap cleanup_docker EXIT
 docker compose up --detach --wait
 curl --silent --fail --request POST http://localhost:8000/createtable

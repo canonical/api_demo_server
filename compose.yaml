@@ -10,7 +10,7 @@ services:
       retries: 10
 
   demo-server:
-    image: api-demo-server:latest
+    image: api-demo-server:integration
     environment:
       DEMO_SERVER_DB_HOST: postgres
     ports:
