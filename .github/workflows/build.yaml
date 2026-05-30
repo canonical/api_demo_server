@@ -40,4 +40,6 @@ jobs:
           docker buildx build \
             -t "ghcr.io/canonical/api_demo_server:${REF_NAME}" \
             --platform linux/amd64,linux/arm64,linux/ppc64le \
+            --sbom=true \
+            --provenance=true \
             --push .
