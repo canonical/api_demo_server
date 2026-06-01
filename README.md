@@ -1,45 +1,55 @@
-# Description
-This is a demo server based on Python FastAPI.
-Server is used to show connections to PostgreSQL and Prometheus.
+This is a demo Python server written with FastAPI. The server connects to PostgreSQL and exposes Prometheus metrics.
 
-To see API reference start the server and open: http://127.0.0.1:8000/docs  
-To get prometheus metrics: http://127.0.0.1:8000/metrics
+The server is packaged as a "rock" using Canonical's OCI-compliant format for container images.
 
-# Usage
-Download and start PostgreSQL container:
-```
-docker run --name postgres -e POSTGRES_PASSWORD=mysecretpassword -d postgres
-```
+# Build and run the container image
 
-Get psql container IP:
-```
-docker ps  # get postgres container ID
-docker inspect <postgres container ID> | grep IPAddress
-```
+You'll need [Rockcraft](https://documentation.ubuntu.com/rockcraft/stable/) and [Docker](https://docs.docker.com/).
 
-Build a docker container via:
-```
-docker build -t api_demo_server .
-```
+1. Build the container image from source:
 
-Start demo server:
-```
-docker run --rm -e DEMO_SERVER_DB_HOST=<postgres container IP> -p 8000:8000 api_demo_server
-```
+    ```text
+    rockcraft pack
+    ```
 
-# Configuration via environment variables
-You can configure application by applying following environment variables:
+    This creates a `.rock` file. The name of the `.rock` file depends on your system architecture.
 
-| Environment Variable    	| Value             	| Description                                     	|
-|-------------------------	|-------------------	|-------------------------------------------------	|
-| DEMO_SERVER_LOGFILE     	| \<path/to/log.log> 	| Path to the file where logs should be written   	|
-| DEMO_SERVER_DB_HOST     	| \<Host IP>         	| IP address of the host where Database is hosted 	|
-| DEMO_SERVER_DB_PORT     	| \<Host Port>       	| Port of the host where Database is hosted       	|
-| DEMO_SERVER_DB_USER     	| \<Username>        	| Username that has access to `names` Database    	|
-| DEMO_SERVER_DB_PASSWORD 	| \<Password>        	| Password to the `DEMO_SERVER_DB_USER` user      	|
+2. Make the container image available to Docker:
 
-# Publish to registry
+    ```text
+    rockcraft.skopeo --insecure-policy \
+        copy "oci-archive:<rock>" "docker-daemon:api-demo-server:integration"
+    ```
 
-```
-docker buildx build -t ghcr.io/canonical/api_demo_server:1.0.4 --platform linux/amd64,linux/arm64,linux/ppc64le --push  .
-```
+    Where `<rock>` is the path to the `.rock` file.
+
+3. Run the container image alongside PostgreSQL:
+
+    ```text
+    docker compose up
+    ```
+
+4. In a separate terminal, check that the server is available:
+
+    ```text
+    curl http://localhost:8000/version
+    ```
+
+    This returns a JSON object that contains the server's version number.
+
+The server has several other API endpoints, including:
+
+- API docs - http://localhost:8000/docs
+- Prometheus metrics - http://localhost:8000/metrics
+
+# Deploy the container image as a Juju charm
+
+See [From zero to hero: Write your first Kubernetes charm](https://documentation.ubuntu.com/ops/latest/tutorial/from-zero-to-hero-write-your-first-kubernetes-charm/)
+
+# Server environment variables
+
+- `DEMO_SERVER_LOGFILE` - Path to the file where logs should be written
+- `DEMO_SERVER_DB_HOST` - IP address of the database host
+- `DEMO_SERVER_DB_PORT` - Port of the database host
+- `DEMO_SERVER_DB_USER` - Username that has access to the database
+- `DEMO_SERVER_DB_PASSWORD` - Password for the `DEMO_SERVER_DB_USER` user
