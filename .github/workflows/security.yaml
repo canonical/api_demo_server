@@ -20,8 +20,6 @@ jobs:
           persist-credentials: false
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b  # v8.1.0
       - name: Create virtual environment and install dependencies
-        run: |
-          uv venv
-          uv pip install .
+        run: uv sync --frozen
       - name: Run pip-audit
-        run: uvx pip-audit --path .venv
+        run: uv run pip-audit
