@@ -42,9 +42,18 @@ The server has several other API endpoints, including:
 - API docs - http://localhost:8000/docs
 - Prometheus metrics - http://localhost:8000/metrics
 
-# Deploy the container image as a Juju charm
+# Run automated tests
 
-See [From zero to hero: Write your first Kubernetes charm](https://documentation.ubuntu.com/ops/latest/tutorial/from-zero-to-hero-write-your-first-kubernetes-charm/)
+If you modify the server, rebuild the container image and run the PostgreSQL integration tests:
+
+```text
+rockcraft pack
+make integration
+```
+
+The integration tests require Docker.
+
+Alternatively, run `rockcraft test`. This builds the container image and runs the integration tests inside a LXD container. It's slower, but you don't need Docker on your system.
 
 # Server environment variables
 
@@ -53,3 +62,7 @@ See [From zero to hero: Write your first Kubernetes charm](https://documentation
 - `DEMO_SERVER_DB_PORT` - Port of the database host
 - `DEMO_SERVER_DB_USER` - Username that has access to the database
 - `DEMO_SERVER_DB_PASSWORD` - Password for the `DEMO_SERVER_DB_USER` user
+
+# Deploy the container image as a Juju charm
+
+See [From zero to hero: Write your first Kubernetes charm](https://documentation.ubuntu.com/ops/latest/tutorial/from-zero-to-hero-write-your-first-kubernetes-charm/)
