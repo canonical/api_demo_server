@@ -19,7 +19,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b  # v8.1.0
-      - name: Create virtual environment and install dependencies
-        run: uv sync --frozen
+      - name: Export locked dependencies (excluding this project)
+        run: uv export --frozen --no-emit-project --no-hashes --format requirements-txt -o requirements.txt
       - name: Run pip-audit
-        run: uv run pip-audit
+        run: uv run pip-audit -r requirements.txt
