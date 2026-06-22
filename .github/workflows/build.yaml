@@ -2,10 +2,8 @@ name: Build and publish image
 
 on:
   push:
-    branches: [master]
-  pull_request:
-    branches: [master]
-  workflow_dispatch:
+    tags:
+      - '*'
 
 permissions: {}
 
@@ -20,7 +18,7 @@ jobs:
       - name: Set Build Matrix
         id: set-matrix
         run: |
-          echo 'build-matrix={"include":[{"name":"api-demo-server","tag":"2.0.0.dev0-24.04_edge","directory":".","artifact-name":"api-demo-server","run-tests":true,"lfs":false,"lfs-include":""}]}' >> $GITHUB_OUTPUT
+          echo 'build-matrix={"include":[{"name":"api-demo-server","tag":"${{ github.ref_name }}-24.04","directory":".","artifact-name":"api-demo-server","run-tests":true,"lfs":false,"lfs-include":""}]}' >> $GITHUB_OUTPUT
       - name: Set Architecture Map
         id: set-map
         run: |
@@ -58,9 +56,7 @@ jobs:
     needs: [prepare, test]
     runs-on: ubuntu-latest
     if: |
-      needs.prepare.outputs.ghcr-upload == 'true' &&
-      github.event_name != 'pull_request' &&
-      github.ref == 'refs/heads/master'
+      needs.prepare.outputs.ghcr-upload == 'true'
     strategy:
       matrix: ${{ fromJSON(needs.prepare.outputs.build-matrix) }}
       fail-fast: false
