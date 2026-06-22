@@ -17,8 +17,23 @@ jobs:
     steps:
       - name: Set Build Matrix
         id: set-matrix
+        env:
+          TAG: ${{ github.ref_name }}
         run: |
-          echo 'build-matrix={"include":[{"name":"api-demo-server","tag":"${{ github.ref_name }}-24.04","directory":".","artifact-name":"api-demo-server","run-tests":true,"lfs":false,"lfs-include":""}]}' >> $GITHUB_OUTPUT
+          matrix=$(jq --null-input --compact-output \
+            --arg tag "${TAG}-24.04" \
+            '{
+              include: [{
+                name: "api-demo-server",
+                tag: $tag,
+                directory: ".",
+                "artifact-name": "api-demo-server",
+                "run-tests": true,
+                lfs: false,
+                "lfs-include": ""
+              }]
+            }')
+          echo "build-matrix=${matrix}" >> $GITHUB_OUTPUT
       - name: Set Architecture Map
         id: set-map
         run: |
