@@ -2,9 +2,9 @@ name: Build and Publish Rocks
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
   workflow_dispatch:
 
 jobs:
@@ -68,7 +68,7 @@ jobs:
     if: |
       needs.prepare.outputs.ghcr-upload == 'true' &&
       github.event_name != 'pull_request' &&
-      github.ref == 'refs/heads/main'
+      github.ref == 'refs/heads/master'
     strategy:
       matrix: ${{ fromJSON(needs.prepare.outputs.build-matrix) }}
       fail-fast: false
@@ -99,7 +99,7 @@ jobs:
     if: |
       needs.prepare.outputs.upload-matrix != '{"include": []}' &&
       github.event_name != 'pull_request' &&
-      github.ref == 'refs/heads/main'
+      github.ref == 'refs/heads/master'
     strategy:
       matrix: ${{ fromJSON(needs.prepare.outputs.upload-matrix) }}
       fail-fast: false
