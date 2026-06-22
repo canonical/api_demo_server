@@ -16,8 +16,6 @@ parts:
       - astral-uv
     stage-packages:
       - python3-venv
-    overlay-packages:
-      - libssl3t64  # Override package from base (because of CVE-2026-45447).
 
 services:
   api-demo-server:

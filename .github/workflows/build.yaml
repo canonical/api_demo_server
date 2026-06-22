@@ -19,7 +19,6 @@ jobs:
         id: set-matrix
         run: |
           echo 'build-matrix={"include":[{"name":"api-demo-server","tag":"2.0.0.dev0-24.04_edge","directory":".","artifact-name":"api-demo-server","run-tests":true,"lfs":false,"lfs-include":""}]}' >> $GITHUB_OUTPUT
-
       - name: Set Architecture Map
         id: set-map
         run: |
@@ -50,6 +49,7 @@ jobs:
     uses: canonical/oci-factory/.github/workflows/Test-Rock.yaml@main
     with:
       oci-archive-name: ${{ matrix.artifact-name }}
+      ignored-vulnerabilities: CVE-2026-45447  # CVE affects OpenSSL version in Ubuntu base.
 
   upload-ghcr:
     needs: [prepare, test]
