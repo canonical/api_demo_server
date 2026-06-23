@@ -65,7 +65,6 @@ jobs:
     uses: canonical/oci-factory/.github/workflows/Test-Rock.yaml@43f2710f69c29e43fd90f9e600896a7e32de96de
     with:
       oci-archive-name: ${{ matrix.artifact-name }}
-      ignored-vulnerabilities: CVE-2026-45447  # CVE affects OpenSSL version in Ubuntu base.
 
   upload-ghcr:
     needs: [prepare, test]
