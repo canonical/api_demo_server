@@ -1,5 +1,6 @@
 name: api-demo-server
-base: ubuntu@24.04
+base: bare
+build-base: ubuntu@24.04
 version: "2.0.0.dev0"
 summary: FastAPI demo server
 description: A web server that can be integrated with a PostgreSQL database.
@@ -15,13 +16,13 @@ parts:
     build-snaps:
       - astral-uv
     stage-packages:
-      - python3-venv
+      - python3.12-venv_ensurepip
 
 services:
   api-demo-server:
     override: replace
     summary: FastAPI demo server
-    command: /bin/uvicorn api_demo_server.app:app --host 0.0.0.0 --port 8000
+    command: /usr/bin/uvicorn api_demo_server.app:app --host 0.0.0.0 --port 8000
     startup: enabled
     on-check-failure:
       api-demo-server-up: restart
