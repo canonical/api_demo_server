@@ -10,19 +10,38 @@ platforms:
   arm64:
 
 parts:
+  python-runtime:
+    plugin: nil
+    stage-packages:
+      - python3.12-venv_ensurepip
+    # Exclude symlinks lib -> usr/lib and lib64 -> usr/lib64 so they don't interfere
+    # with uv's venv creation and console scripts.
+    stage:
+      - -lib/
+      - -lib64/
   api-demo-server:
+    after:
+      - python-runtime
     source: .
     plugin: uv
     build-snaps:
       - astral-uv
-    stage-packages:
-      - python3.12-venv_ensurepip
+  fix-symlinks:
+    plugin: nil
+    after:
+      - api-demo-server
+    override-prime: |
+      # Fix symlinks so the dynamic linker resolves.
+      cp --archive --no-clobber ${CRAFT_PRIME}/lib/* ${CRAFT_PRIME}/usr/lib/
+      rm -rf ${CRAFT_PRIME}/lib/ ${CRAFT_PRIME}/lib64/
+      ln -s usr/lib ${CRAFT_PRIME}/lib
+      ln -s usr/lib64 ${CRAFT_PRIME}/lib64
 
 services:
   api-demo-server:
     override: replace
     summary: FastAPI demo server
-    command: /usr/bin/uvicorn api_demo_server.app:app --host 0.0.0.0 --port 8000
+    command: /bin/uvicorn api_demo_server.app:app --host 0.0.0.0 --port 8000
     startup: enabled
     on-check-failure:
       api-demo-server-up: restart
