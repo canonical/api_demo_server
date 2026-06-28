@@ -56,7 +56,7 @@ parts:
     override-prime: gen_manifest
 
 services:
-  api-demo-server:
+  fastapi:
     override: replace
     summary: FastAPI demo server
     command: /bin/uvicorn api_demo_server.app:app --host 0.0.0.0 --port 8000
@@ -64,12 +64,12 @@ services:
     environment:
       DEMO_SERVER_LOGFILE: /tmp/demo_server.log
     on-check-failure:
-      api-demo-server-up: restart
+      server-up: restart
 
 # This check is internal to the container.
 # It doesn't mean the container is ready to process external requests.
 checks:
-  api-demo-server-up:
+  server-up:
     override: replace
     period: 1s
     timeout: 5s
