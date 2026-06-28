@@ -1,6 +1,7 @@
 name: api-demo-server
 base: bare
 build-base: ubuntu@24.04
+run-user: _daemon_
 version: "2.0.0.dev0"
 summary: FastAPI demo server
 description: A web server that can be integrated with a PostgreSQL database.
@@ -14,8 +15,8 @@ parts:
     plugin: nil
     stage-packages:
       - python3.12-venv_ensurepip
-    # Exclude symlinks lib -> usr/lib and lib64 -> usr/lib64 so they don't interfere
-    # with uv's venv creation and console scripts.
+    # ^ This sets up symlinks from lib and lib64 to usr/<dir>.
+    # Exclude the symlinks (for now) so they don't interfere with uv.
     stage:
       - -lib/
       - -lib64/
@@ -26,16 +27,33 @@ parts:
     plugin: uv
     build-snaps:
       - astral-uv
-  fix-symlinks:
+    # Copy the venv's lib dir to usr/lib, then exclude lib and lib64.
+    # The next part will create symlinks from lib and lib64 to usr/<dir>.
+    override-prime: |
+      craftctl default
+      cp --archive --no-clobber ${CRAFT_PART_INSTALL}/lib/* ${CRAFT_PRIME}/usr/lib/
+      rm -rf ${CRAFT_PRIME}/lib/ ${CRAFT_PRIME}/lib64/
+    stage:
+      - -lib/
+      - -lib64/
+  runtime-base:
     plugin: nil
     after:
       - api-demo-server
-    override-prime: |
-      # Fix symlinks so the dynamic linker resolves.
-      cp --archive --no-clobber ${CRAFT_PRIME}/lib/* ${CRAFT_PRIME}/usr/lib/
-      rm -rf ${CRAFT_PRIME}/lib/ ${CRAFT_PRIME}/lib64/
-      ln -s usr/lib ${CRAFT_PRIME}/lib
-      ln -s usr/lib64 ${CRAFT_PRIME}/lib64
+    stage-packages:
+      # Create symlinks from bin, lib, and lib64 to usr/<dir>.
+      # Also create definitions for the _daemon_ user.
+      - base-files_base
+      # Create a chisel manifest for the deb-security-manifest part.
+      - base-files_chisel
+    stage:
+      - -bin/  # We want the venv's bin dir insead of a symlink to usr/bin.
+  deb-security-manifest:
+    plugin: make
+    source: https://github.com/canonical/rocks-security-manifest
+    source-type: git
+    source-branch: main
+    override-prime: gen_manifest
 
 services:
   api-demo-server:
@@ -43,6 +61,8 @@ services:
     summary: FastAPI demo server
     command: /bin/uvicorn api_demo_server.app:app --host 0.0.0.0 --port 8000
     startup: enabled
+    environment:
+      DEMO_SERVER_LOGFILE: /tmp/demo_server.log
     on-check-failure:
       api-demo-server-up: restart
 
