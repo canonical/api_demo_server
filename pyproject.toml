@@ -30,8 +30,5 @@ requires = [
 ]
 build-backend = "uv_build"
 
-[tool.flit.module]
-name = "api_demo_server"
-
 [tool.ruff]
 line-length = 99
