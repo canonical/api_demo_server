@@ -20,7 +20,7 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           matrix=$(jq --null-input --compact-output \
-            --arg tag "${TAG}-24.04" \
+            --arg tag "${TAG}" \
             '{
               include: [{
                 name: "api-demo-server",
