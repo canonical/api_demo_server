@@ -11,7 +11,6 @@ jobs:
   prepare:
     runs-on: ubuntu-latest
     outputs:
-      ghcr-upload: 'true'
       build-matrix: ${{ steps.set-matrix.outputs.build-matrix }}
       arch-map: ${{ steps.set-map.outputs.arch-map }}
     steps:
@@ -68,8 +67,6 @@ jobs:
   upload-ghcr:
     needs: [prepare, test]
     runs-on: ubuntu-latest
-    if: |
-      needs.prepare.outputs.ghcr-upload == 'true'
     strategy:
       matrix: ${{ fromJSON(needs.prepare.outputs.build-matrix) }}
       fail-fast: false
