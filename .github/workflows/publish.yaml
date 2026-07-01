@@ -36,6 +36,9 @@ jobs:
       - name: Set Architecture Map
         id: set-map
         run: |
+          # We prefer to schedule the builds on Canonical's self-hosted runners, bypassing the
+          # queue for GitHub runners. But if someone forks our repo and tries to build images from
+          # their fork, they won't be able to access Canonical runners, so use GitHub runners.
           if [[ "${{ github.repository_owner }}" != "canonical" ]]; then
             echo 'arch-map={"amd64":["ubuntu-24.04"],"arm64":["ubuntu-24.04-arm"]}' >> $GITHUB_OUTPUT
           fi
