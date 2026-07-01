@@ -43,7 +43,6 @@ jobs:
 
   build:
     needs: [prepare]
-    permissions: {}
     strategy:
       matrix: ${{ fromJSON(needs.prepare.outputs.build-matrix) }}
     uses: canonical/oci-factory/.github/workflows/Build-Rock.yaml@43f2710f69c29e43fd90f9e600896a7e32de96de
