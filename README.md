@@ -6,6 +6,8 @@ The server is packaged as a "rock" using Canonical's OCI-compliant format for co
 
 You'll need [Rockcraft](https://documentation.ubuntu.com/rockcraft/stable/) and [Docker](https://docs.docker.com/).
 
+By default, Docker requires `sudo`. To use Docker as a regular user, run `sudo usermod -aG docker $USER` then log out and log back in again.
+
 1. Build the container image from source:
 
     ```text
