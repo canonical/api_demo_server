@@ -3,6 +3,7 @@ set -euo pipefail
 
 cleanup_docker() {
     docker compose down --volumes --remove-orphans
+    docker image rm api-demo-server:integration
 }
 
 rock_path="${ROCK_PATH:-}"
