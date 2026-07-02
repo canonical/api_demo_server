@@ -12,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       build-matrix: ${{ steps.set-matrix.outputs.build-matrix }}
-      arch-map: ${{ steps.set-map.outputs.arch-map }}
     steps:
       - name: Set Build Matrix
         id: set-matrix
@@ -33,14 +32,6 @@ jobs:
               }]
             }')
           echo "build-matrix=${matrix}" >> $GITHUB_OUTPUT
-      - name: Set Architecture Map
-        id: set-map
-        run: |
-          # We prefer to schedule the builds on Canonical's self-hosted runners, bypassing the
-          # queue for GitHub runners. But if someone forks our repo and tries to build images from
-          # their fork, they won't be able to access Canonical runners, so use GitHub runners.
-          if [[ "${{ github.repository_owner }}" != "canonical" ]]; then
-            echo 'arch-map={"amd64":["ubuntu-24.04"],"arm64":["ubuntu-24.04-arm"]}' >> $GITHUB_OUTPUT
           fi
 
   build:
@@ -53,7 +44,7 @@ jobs:
       rock-repo-commit: ${{ github.head_ref || github.ref_name }}
       rockfile-directory: ${{ matrix.directory }}
       oci-archive-name: ${{ matrix.artifact-name }}
-      arch-map: ${{ needs.prepare.outputs.arch-map }}
+      arch-map: '{"amd64":["ubuntu-24.04"],"arm64":["ubuntu-24.04-arm"]}'
       rockcraft-test: ${{ matrix.run-tests }}
     secrets:
       source-github-token: ${{ secrets.REPO_CLONER_TOKEN }}
