@@ -44,6 +44,8 @@ jobs:
       rock-repo-commit: ${{ github.head_ref || github.ref_name }}
       rockfile-directory: ${{ matrix.directory }}
       oci-archive-name: ${{ matrix.artifact-name }}
+      # We don't have any special architecture or performance requirements,
+      # so use GitHub's runners instead of Canonical's self-hosted runners.
       arch-map: '{"amd64":["ubuntu-24.04"],"arm64":["ubuntu-24.04-arm"]}'
       rockcraft-test: ${{ matrix.run-tests }}
     secrets:
