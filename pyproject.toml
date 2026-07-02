@@ -38,3 +38,4 @@ line-length = 99
 
 [tool.uv]
 exclude-newer = "7 days"
+no-build = true
