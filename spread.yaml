@@ -1,0 +1,27 @@
+project: api-demo-server
+
+backends:
+  craft:
+    type: craft
+    systems:
+      - ubuntu-24.04:
+
+suites:
+  spread/integration-test/:
+    summary: Environment for the integration test
+
+    prepare: |
+      sudo snap install docker
+
+      # For 'rockcraft.skopeo'
+      sudo snap install --classic rockcraft
+
+      # Wait for docker daemon to come online
+      sudo apt install --yes retry
+      retry --times=10 --delay 2 -- docker run hello-world
+      sudo apt remove --yes retry
+
+exclude:
+  - .git
+
+kill-timeout: 1h
