@@ -35,3 +35,6 @@ name = "api_demo_server"
 
 [tool.ruff]
 line-length = 99
+
+[tool.uv]
+exclude-newer = "7 days"
