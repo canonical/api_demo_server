@@ -1,0 +1,80 @@
+name: Build and publish image
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions: {}
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      build-matrix: ${{ steps.set-matrix.outputs.build-matrix }}
+    steps:
+      - name: Set Build Matrix
+        id: set-matrix
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          matrix=$(jq --null-input --compact-output \
+            --arg tag "${TAG}" \
+            '{
+              include: [{
+                name: "api-demo-server",
+                tag: $tag,
+                directory: ".",
+                "artifact-name": "api-demo-server",
+                "run-tests": true,
+                lfs: false,
+                "lfs-include": ""
+              }]
+            }')
+          echo "build-matrix=${matrix}" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    needs: [prepare]
+    strategy:
+      matrix: ${{ fromJSON(needs.prepare.outputs.build-matrix) }}
+    uses: canonical/oci-factory/.github/workflows/Build-Rock.yaml@43f2710f69c29e43fd90f9e600896a7e32de96de
+    with:
+      rock-repo: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+      rock-repo-commit: ${{ github.head_ref || github.ref_name }}
+      rockfile-directory: ${{ matrix.directory }}
+      oci-archive-name: ${{ matrix.artifact-name }}
+      # We don't have any special architecture or performance requirements,
+      # so use GitHub's runners instead of Canonical's self-hosted runners.
+      arch-map: '{"amd64":["ubuntu-24.04"],"arm64":["ubuntu-24.04-arm"]}'
+      rockcraft-test: ${{ matrix.run-tests }}
+    secrets:
+      source-github-token: ${{ secrets.REPO_CLONER_TOKEN }}
+
+  test:
+    needs: [prepare, build]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.build-matrix) }}
+    uses: canonical/oci-factory/.github/workflows/Test-Rock.yaml@43f2710f69c29e43fd90f9e600896a7e32de96de
+    with:
+      oci-archive-name: ${{ matrix.artifact-name }}
+
+  upload-ghcr:
+    needs: [prepare, test]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJSON(needs.prepare.outputs.build-matrix) }}
+      fail-fast: false
+    permissions:
+      packages: write
+    steps:
+      - name: Upload Rock to GHCR
+        uses: canonical/oci-factory/.github/actions/upload-rock@43f2710f69c29e43fd90f9e600896a7e32de96de
+        with:
+          artifact_name: ${{ matrix.artifact-name }}
+          tags: ${{ matrix.tag }}
+          name: ${{ matrix.name }}
+          registry: ghcr.io/${{ github.repository }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}

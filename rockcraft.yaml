@@ -1,0 +1,78 @@
+name: api-demo-server
+base: bare
+build-base: ubuntu@24.04
+run-user: _daemon_
+version: "2.0.0"
+summary: FastAPI demo server
+description: A web server that can be integrated with a PostgreSQL database.
+license: Apache-2.0
+platforms:
+  amd64:
+  arm64:
+
+parts:
+  python-runtime:
+    plugin: nil
+    stage-packages:
+      - python3.12-venv_ensurepip
+    # ^ This sets up symlinks from lib and lib64 to usr/<dir>.
+    # Exclude the symlinks (for now) so they don't interfere with uv.
+    stage:
+      - -lib/
+      - -lib64/
+  api-demo-server:
+    after:
+      - python-runtime
+    source: .
+    plugin: uv
+    build-snaps:
+      - astral-uv
+    # Copy the venv's lib dir to usr/lib, then exclude lib and lib64.
+    # The next part will create symlinks from lib and lib64 to usr/<dir>.
+    override-prime: |
+      craftctl default
+      cp --archive --no-clobber ${CRAFT_PART_INSTALL}/lib/* ${CRAFT_PRIME}/usr/lib/
+      rm -rf ${CRAFT_PRIME}/lib/ ${CRAFT_PRIME}/lib64/
+    stage:
+      - -lib/
+      - -lib64/
+  runtime-base:
+    plugin: nil
+    after:
+      - api-demo-server
+    stage-packages:
+      # Create symlinks from bin, lib, and lib64 to usr/<dir>.
+      # Also create definitions for the _daemon_ user.
+      - base-files_base
+      # Create a chisel manifest for the deb-security-manifest part.
+      - base-files_chisel
+    stage:
+      - -bin/  # We want the venv's bin dir insead of a symlink to usr/bin.
+  deb-security-manifest:
+    plugin: make
+    source: https://github.com/canonical/rocks-security-manifest
+    source-type: git
+    source-tag: v0.1.0
+    override-prime: gen_manifest
+
+services:
+  fastapi:
+    override: replace
+    summary: FastAPI demo server
+    command: /bin/uvicorn api_demo_server.app:app --host 0.0.0.0 --port 8000
+    startup: enabled
+    environment:
+      DEMO_SERVER_LOGFILE: /tmp/demo_server.log
+    on-check-failure:
+      server-up: restart
+
+# This check is internal to the container.
+# It doesn't mean the container is ready to process external requests.
+checks:
+  server-up:
+    override: replace
+    period: 1s
+    timeout: 5s
+    threshold: 5
+    http:
+      url: http://127.0.0.1:8000/version
