@@ -19,7 +19,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "pip-audit>=2.9,<3",
+    "pip-audit>=2.10.1,<3",
     "ruff>=0.15.20,<1",
     "ty>=0.0.55,<1",
 ]
