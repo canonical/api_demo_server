@@ -56,7 +56,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.prepare.outputs.build-matrix) }}
-    uses: canonical/oci-factory/.github/workflows/Test-Rock.yaml@43f2710f69c29e43fd90f9e600896a7e32de96de
+    uses: canonical/oci-factory/.github/workflows/Test-Rock.yaml@72d06a6b2336bccf266df3d9c1caf6887d8b150a
     with:
       oci-archive-name: ${{ matrix.artifact-name }}
 
