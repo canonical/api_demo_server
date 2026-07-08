@@ -1,0 +1,53 @@
+# Routine version-update sweeps only. CVE patches are raised by the
+# repo-level "Dependabot security updates" toggle (managed in
+# canonical-repo-automation: features.dependabot_security_updates = true),
+# which is event-driven and does not honour the schedule below.
+version: 2
+
+updates:
+  # GitHub Actions: monthly, single grouped PR
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "dependencies"
+    open-pull-requests-limit: 100
+    commit-message:
+      prefix: "chore"
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns:
+          - "*"
+
+  # Python (uv): monthly, grouped along two seams.
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "dependencies"
+    open-pull-requests-limit: 100
+    commit-message:
+      prefix: "chore"
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+    groups:
+      # Linters / type-checkers / formatters. Majors ride along; we do not
+      # pin these and a major bump is low-risk to review in a batch.
+      dev-tooling:
+        patterns:
+          - "ruff"
+          - "ty"
+          - "pip-audit"
+      # Everything else, minor + patch only. A runtime MAJOR falls through
+      # to its own ungrouped PR so it never silently rides a patch bundle.
+      runtime:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
