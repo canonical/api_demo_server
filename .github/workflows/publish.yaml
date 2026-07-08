@@ -38,7 +38,7 @@ jobs:
     needs: [prepare]
     strategy:
       matrix: ${{ fromJSON(needs.prepare.outputs.build-matrix) }}
-    uses: canonical/oci-factory/.github/workflows/Build-Rock.yaml@72d06a6b2336bccf266df3d9c1caf6887d8b150a
+    uses: canonical/oci-factory/.github/workflows/Build-Rock.yaml@7b181f1b01220af97348d66dde106efa9af83cbe  # zookeeper_3.8.6-22.04_36
     with:
       rock-repo: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
       rock-repo-commit: ${{ github.head_ref || github.ref_name }}
@@ -56,7 +56,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.prepare.outputs.build-matrix) }}
-    uses: canonical/oci-factory/.github/workflows/Test-Rock.yaml@72d06a6b2336bccf266df3d9c1caf6887d8b150a
+    uses: canonical/oci-factory/.github/workflows/Test-Rock.yaml@7b181f1b01220af97348d66dde106efa9af83cbe  # zookeeper_3.8.6-22.04_36
     with:
       oci-archive-name: ${{ matrix.artifact-name }}
 
@@ -70,7 +70,7 @@ jobs:
       packages: write
     steps:
       - name: Upload Rock to GHCR
-        uses: canonical/oci-factory/.github/actions/upload-rock@72d06a6b2336bccf266df3d9c1caf6887d8b150a
+        uses: canonical/oci-factory/.github/actions/upload-rock@7b181f1b01220af97348d66dde106efa9af83cbe  # zookeeper_3.8.6-22.04_36
         with:
           artifact_name: ${{ matrix.artifact-name }}
           tags: ${{ matrix.tag }}
