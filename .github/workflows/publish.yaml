@@ -32,7 +32,6 @@ jobs:
               }]
             }')
           echo "build-matrix=${matrix}" >> $GITHUB_OUTPUT
-          fi
 
   build:
     needs: [prepare]
