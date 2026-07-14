@@ -2,7 +2,7 @@ name: api-demo-server
 base: bare
 build-base: ubuntu@24.04
 run-user: _daemon_
-version: "2.0.0"
+version: "2.1.0"
 summary: FastAPI demo server
 description: A web server that can be integrated with a PostgreSQL database.
 license: Apache-2.0
@@ -63,16 +63,7 @@ services:
     startup: enabled
     environment:
       DEMO_SERVER_LOGFILE: /tmp/demo_server.log
-    on-check-failure:
-      server-up: restart
-
-# This check is internal to the container.
-# It doesn't mean the container is ready to process external requests.
-checks:
-  server-up:
-    override: replace
-    period: 1s
-    timeout: 5s
-    threshold: 5
-    http:
-      url: http://127.0.0.1:8000/version
+    # Exit Pebble if the server exits. We prefer to let the consumer of the image
+    # implement their own restart strategy.
+    on-success: shutdown
+    on-failure: shutdown
