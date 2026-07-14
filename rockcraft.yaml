@@ -2,7 +2,7 @@ name: api-demo-server
 base: bare
 build-base: ubuntu@24.04
 run-user: _daemon_
-version: "2.1.0"
+version: "2.1.1"
 summary: FastAPI demo server
 description: A web server that can be integrated with a PostgreSQL database.
 license: Apache-2.0
