@@ -108,6 +108,7 @@ jobs:
           sbom: ./sbom.spdx.json
           fail-build: true
           severity-cutoff: high
+          output-format: table
 
   upload-ghcr:
     needs: [prepare, attest-and-scan]
