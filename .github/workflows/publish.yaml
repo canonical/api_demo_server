@@ -37,7 +37,7 @@ jobs:
     needs: [prepare]
     strategy:
       matrix: ${{ fromJSON(needs.prepare.outputs.build-matrix) }}
-    uses: canonical/oci-factory/.github/workflows/Build-Rock.yaml@de55cd493720fc91cf5b629a34a10b3be7b0434a  # memcached_1.6-26.04_edge
+    uses: canonical/oci-factory/.github/workflows/Build-Rock.yaml@de55cd493720fc91cf5b629a34a10b3be7b0434a  # memcached_1.6-26.04_35
     with:
       rock-repo: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
       rock-repo-commit: ${{ github.head_ref || github.ref_name }}
@@ -55,7 +55,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.prepare.outputs.build-matrix) }}
-    uses: canonical/oci-factory/.github/workflows/Test-Rock.yaml@de55cd493720fc91cf5b629a34a10b3be7b0434a  # memcached_1.6-26.04_edge
+    uses: canonical/oci-factory/.github/workflows/Test-Rock.yaml@de55cd493720fc91cf5b629a34a10b3be7b0434a  # memcached_1.6-26.04_35
     with:
       oci-archive-name: ${{ matrix.artifact-name }}
 
@@ -114,7 +114,7 @@ jobs:
       packages: write
     steps:
       - name: Upload Rock to GHCR
-        uses: canonical/oci-factory/.github/actions/upload-rock@de55cd493720fc91cf5b629a34a10b3be7b0434a  # memcached_1.6-26.04_edge
+        uses: canonical/oci-factory/.github/actions/upload-rock@de55cd493720fc91cf5b629a34a10b3be7b0434a  # memcached_1.6-26.04_35
         with:
           artifact_name: ${{ matrix.artifact-name }}
           tags: ${{ matrix.tag }}

@@ -12,12 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           persist-credentials: false
 
       - name: Pack the rock
-        uses: canonical/craft-actions/rockcraft-pack@210d55fa6cb7a1ab39e3194315d6a03249af3d34
+        uses: canonical/craft-actions/rockcraft-pack@acd2f2e61c7563b38ba89390ca0e910fa7d2784f  # v0.1.1
 
       - name: Run the integration test
         run: make integration
