@@ -1,12 +1,10 @@
 import logging
 import os
-from typing import List
-from typing import Tuple
 
 import psycopg2
 from psycopg2 import sql
-from psycopg2.extensions import connection as PGConnection
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from psycopg2.extensions import connection as PGConnection
 
 # set logger to be configurable from external
 logger = logging.getLogger("api-demo-server")
@@ -111,7 +109,7 @@ class DataBase:
                 (name,),
             )
 
-    def all_names(self, db_name: str, table_name: str) -> List[Tuple[int, str]]:
+    def all_names(self, db_name: str, table_name: str) -> list[tuple[int, str]]:
         self.create_table(db_name, table_name)
         with self._require_connection().cursor() as cursor:
             cursor.execute(sql.SQL("SELECT * FROM {}").format(sql.Identifier(table_name)))

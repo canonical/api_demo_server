@@ -1,12 +1,9 @@
 import logging
 import os
 
-from fastapi import FastAPI
-from fastapi import Form
-from starlette.responses import RedirectResponse
-from starlette.responses import Response
-from starlette_exporter import PrometheusMiddleware
-from starlette_exporter import handle_metrics
+from fastapi import FastAPI, Form
+from starlette.responses import RedirectResponse, Response
+from starlette_exporter import PrometheusMiddleware, handle_metrics
 
 from . import __version__
 from .database import DataBase
