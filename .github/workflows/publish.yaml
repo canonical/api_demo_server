@@ -33,11 +33,12 @@ jobs:
             }')
           echo "build-matrix=${matrix}" >> $GITHUB_OUTPUT
 
+  # oci-factory doesn't have release tags. These actions are pinned to a commit on main and bumped by Dependabot.
   build:
     needs: [prepare]
     strategy:
       matrix: ${{ fromJSON(needs.prepare.outputs.build-matrix) }}
-    uses: canonical/oci-factory/.github/workflows/Build-Rock.yaml@de55cd493720fc91cf5b629a34a10b3be7b0434a  # memcached_1.6-26.04_35
+    uses: canonical/oci-factory/.github/workflows/Build-Rock.yaml@26adc1d6d1458dad6cb4176ed077def7b3ed1fcd
     with:
       rock-repo: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
       rock-repo-commit: ${{ github.head_ref || github.ref_name }}
@@ -53,7 +54,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.prepare.outputs.build-matrix) }}
-    uses: canonical/oci-factory/.github/workflows/Test-Rock.yaml@de55cd493720fc91cf5b629a34a10b3be7b0434a  # memcached_1.6-26.04_35
+    uses: canonical/oci-factory/.github/workflows/Test-Rock.yaml@26adc1d6d1458dad6cb4176ed077def7b3ed1fcd
     with:
       oci-archive-name: ${{ matrix.artifact-name }}
 
@@ -83,7 +84,7 @@ jobs:
         run: echo "path=$(ls ./rock/${{ matrix.name }}_*_${{ matrix.arch }}.rock)" >> "$GITHUB_OUTPUT"
 
       - name: Attest build provenance
-        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763  # v4.1.1
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6  # v4.2.2
         with:
           subject-path: ${{ steps.rock.outputs.path }}
 
@@ -97,7 +98,7 @@ jobs:
       packages: write
     steps:
       - name: Upload Rock to GHCR
-        uses: canonical/oci-factory/.github/actions/upload-rock@de55cd493720fc91cf5b629a34a10b3be7b0434a  # memcached_1.6-26.04_35
+        uses: canonical/oci-factory/.github/actions/upload-rock@26adc1d6d1458dad6cb4176ed077def7b3ed1fcd
         with:
           artifact_name: ${{ matrix.artifact-name }}
           tags: ${{ matrix.tag }}
