@@ -38,7 +38,7 @@ jobs:
     needs: [prepare]
     strategy:
       matrix: ${{ fromJSON(needs.prepare.outputs.build-matrix) }}
-    uses: canonical/oci-factory/.github/workflows/Build-Rock.yaml@417c923008e5729927deaf55d2c0ed5a45d9faf1
+    uses: canonical/oci-factory/.github/workflows/Build-Rock.yaml@4b812bc455738a500c8a2deea64b1038100be997
     with:
       rock-repo: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
       rock-repo-commit: ${{ github.head_ref || github.ref_name }}
@@ -54,7 +54,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.prepare.outputs.build-matrix) }}
-    uses: canonical/oci-factory/.github/workflows/Test-Rock.yaml@417c923008e5729927deaf55d2c0ed5a45d9faf1
+    uses: canonical/oci-factory/.github/workflows/Test-Rock.yaml@4b812bc455738a500c8a2deea64b1038100be997
     with:
       oci-archive-name: ${{ matrix.artifact-name }}
 
@@ -98,7 +98,7 @@ jobs:
       packages: write
     steps:
       - name: Upload Rock to GHCR
-        uses: canonical/oci-factory/.github/actions/upload-rock@417c923008e5729927deaf55d2c0ed5a45d9faf1
+        uses: canonical/oci-factory/.github/actions/upload-rock@4b812bc455738a500c8a2deea64b1038100be997
         with:
           artifact_name: ${{ matrix.artifact-name }}
           tags: ${{ matrix.tag }}
