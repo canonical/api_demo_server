@@ -9,11 +9,11 @@ license = "Apache-2.0"
 license-files = ["LICENSE"]
 requires-python = ">=3.10"
 dependencies = [
-    "fastapi==0.141.1",
-    "uvicorn==0.52.4",
+    "fastapi==0.142.2",
+    "uvicorn==0.54.0",
     "python-multipart==0.0.32",
-    "psycopg2-binary==2.9.12",
-    "starlette==1.6.0",
+    "psycopg2-binary==2.9.13",
+    "starlette==1.7.0",
     "starlette_exporter==0.24.0"
 ]
 
