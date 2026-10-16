@@ -29,7 +29,6 @@ rockcraft.skopeo --insecure-policy \
     copy "oci-archive:${rock_path}" "docker-daemon:api-demo-server:integration"
 trap cleanup_docker EXIT
 docker compose up --detach --wait
-curl --silent --fail --request POST http://localhost:8000/createtable
 curl --silent --fail --request POST http://localhost:8000/addname/ --data "name=Alice"
 response="$(curl --silent --fail http://localhost:8000/names)"
 echo "Response: $response"
