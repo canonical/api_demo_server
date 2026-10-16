@@ -12,7 +12,7 @@ services:
   demo-server:
     image: api-demo-server:integration
     environment:
-      DEMO_SERVER_DB_HOST: postgres
+      POSTGRESQL_DB_HOST: postgres
     ports:
       - "8000:8000"
     depends_on:

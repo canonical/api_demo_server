@@ -9,11 +9,11 @@ from psycopg2.extensions import connection as PGConnection
 # set logger to be configurable from external
 logger = logging.getLogger("api-demo-server")
 
-DB_HOST = os.environ.get("DEMO_SERVER_DB_HOST", "127.0.0.1")
-DB_PORT = os.environ.get("DEMO_SERVER_DB_PORT", "5432")
+DB_HOST = os.environ.get("POSTGRESQL_DB_HOST", "127.0.0.1")
+DB_PORT = os.environ.get("POSTGRESQL_DB_PORT", "5432")
 
-DB_USER = os.environ.get("DEMO_SERVER_DB_USER", "postgres")
-DB_PASSWORD = os.environ.get("DEMO_SERVER_DB_PASSWORD", "mysecretpassword")
+DB_USER = os.environ.get("POSTGRESQL_DB_USER", "postgres")
+DB_PASSWORD = os.environ.get("POSTGRESQL_DB_PASSWORD", "mysecretpassword")
 
 
 class DataBase:
