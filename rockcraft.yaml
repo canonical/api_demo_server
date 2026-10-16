@@ -61,8 +61,6 @@ services:
     summary: FastAPI demo server
     command: /bin/uvicorn api_demo_server.app:app --host 0.0.0.0 --port 8000
     startup: enabled
-    environment:
-      DEMO_SERVER_LOGFILE: /tmp/demo_server.log
     # Exit Pebble if the server exits. We prefer to let the consumer of the image
     # implement their own restart strategy.
     on-success: shutdown
