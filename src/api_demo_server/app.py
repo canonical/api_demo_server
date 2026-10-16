@@ -6,7 +6,7 @@ from starlette.responses import RedirectResponse, Response
 from starlette_exporter import PrometheusMiddleware, handle_metrics
 
 from . import __version__
-from .database import DataBase
+from .database import DB_NAME, DataBase
 
 
 def define_logger():
@@ -60,23 +60,23 @@ def root():
 
 @app.post("/createtable")
 def create_table():
-    PSQL_DB.create_table(db_name="names_db", table_name="names")
+    PSQL_DB.create_table(db_name=DB_NAME, table_name="names")
 
 
 @app.post("/deletetable")
 def delete_table():
-    PSQL_DB.delete_table(db_name="names_db", table_name="names")
+    PSQL_DB.delete_table(db_name=DB_NAME, table_name="names")
 
 
 @app.post("/addname/")
 def add_name(name: str = Form()):
-    PSQL_DB.add_name(name, db_name="names_db", table_name="names")
+    PSQL_DB.add_name(name, db_name=DB_NAME, table_name="names")
     return {"name added": name}
 
 
 @app.get("/names")
 def get_all_names():
-    return {"names": dict(PSQL_DB.all_names(db_name="names_db", table_name="names"))}
+    return {"names": dict(PSQL_DB.all_names(db_name=DB_NAME, table_name="names"))}
 
 
 @app.get("/error")
