@@ -64,6 +64,7 @@ Alternatively, run `rockcraft test`. This builds the container image and runs th
 - `POSTGRESQL_DB_PORT` - Port of the database host
 - `POSTGRESQL_DB_USERNAME` - Username that has access to the database
 - `POSTGRESQL_DB_PASSWORD` - Password for the `POSTGRESQL_DB_USERNAME` user
+- `POSTGRESQL_DB_NAME` - Name of the database to create
 
 # Deploy the container image as a Juju charm
 

@@ -11,9 +11,9 @@ logger = logging.getLogger("api-demo-server")
 
 DB_HOST = os.environ.get("POSTGRESQL_DB_HOSTNAME", "127.0.0.1")
 DB_PORT = os.environ.get("POSTGRESQL_DB_PORT", "5432")
-
 DB_USER = os.environ.get("POSTGRESQL_DB_USERNAME", "postgres")
 DB_PASSWORD = os.environ.get("POSTGRESQL_DB_PASSWORD", "mysecretpassword")
+DB_NAME = os.environ.get("POSTGRESQL_DB_NAME", "names_db")
 
 
 class DataBase:
