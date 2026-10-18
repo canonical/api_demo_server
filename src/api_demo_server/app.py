@@ -20,7 +20,7 @@ def define_logger():
     stream_handler.setFormatter(formatter)
     log.addHandler(stream_handler)
 
-    log_file = os.environ.get("DEMO_SERVER_LOGFILE", "demo_server.log")
+    log_file = os.environ.get("DEMO_SERVER_LOGFILE", "/tmp/demo_server.log")
     file_handler = logging.FileHandler(filename=log_file)
     file_handler.setFormatter(formatter)
     log.addHandler(file_handler)
