@@ -60,10 +60,10 @@ Alternatively, run `rockcraft test`. This builds the container image and runs th
 # Server environment variables
 
 - `DEMO_SERVER_LOGFILE` - Path to the file where logs should be written
-- `DEMO_SERVER_DB_HOST` - IP address of the database host
-- `DEMO_SERVER_DB_PORT` - Port of the database host
-- `DEMO_SERVER_DB_USER` - Username that has access to the database
-- `DEMO_SERVER_DB_PASSWORD` - Password for the `DEMO_SERVER_DB_USER` user
+- `POSTGRESQL_DB_HOSTNAME` - IP address of the database host
+- `POSTGRESQL_DB_PORT` - Port of the database host
+- `POSTGRESQL_DB_USERNAME` - Username that has access to the database
+- `POSTGRESQL_DB_PASSWORD` - Password for the `POSTGRESQL_DB_USERNAME` user
 - `POSTGRESQL_DB_NAME` - Name of the database to create
 
 # Deploy the container image as a Juju charm
