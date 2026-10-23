@@ -17,7 +17,7 @@ jobs:
           persist-credentials: false
 
       - name: Pack the rock
-        uses: canonical/craft-actions/rockcraft-pack@acd2f2e61c7563b38ba89390ca0e910fa7d2784f  # v0.1.1
+        uses: canonical/craft-actions/rockcraft/pack@d2add174925f9bca7b0a826010c8e1ce2a4bbc3d  # v1.0.0
 
       - name: Run the integration test
         run: make integration
