@@ -21,3 +21,10 @@ jobs:
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294  # v5.0.0
         with:
           fail-on-severity: high
+          # These advisories are for filelock 4.1.0. Under Python 3.10, we can't
+          # move past filelock 4.1.0, so we exclude these advisories.
+          # Justification:
+          # - filelock is dev-only (from pip-audit) and doesn't ship in the rock.
+          # - The advisories affect classes that aren't used on Linux.
+          # - Under Python 3.11+, we've locked a fixed version of filelock.
+          allow-ghsas: GHSA-2g95-wg33-c5x2, GHSA-567q-5qvw-pf92, GHSA-9vhv-jxww-xfm5, GHSA-crv4-6mhj-j5jh, GHSA-jqc4-5cvw-7w85, GHSA-v4x8-3wr5-3wq8
